@@ -77,6 +77,7 @@ def stock_group():
 # 🛑 ROUTE ล้างข้อมูลยอดขายและสต๊อกเป็น 0
 # ==========================================
 @router.get("/api/clear-all-data")
+@router.post("/api/clear-all-data")
 def clear_all_data():
     try:
         conn = sqlite3.connect("data/maxky_pos.db")
