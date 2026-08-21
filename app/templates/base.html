@@ -253,6 +253,49 @@ async function updateNetworkStatus() {
 {% block content %}
 {% endblock %}
 </div>
+<!-- 🔊 สคริปต์เพิ่มเสียงปิ๊บและระบบสั่นเมื่อกดปุ่ม -->
+<script>
+// 1. ฟังก์ชันสร้างเสียง Beep สั้นๆ
+function playClickSound() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine'; // เสียงนุ่มนวล
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // ความถี่เสียง (800Hz)
+
+        // ปรับความดังให้ค่อยๆ เบาลงอย่างรวดเร็ว (ลดเสียงเป๊ก/แปก)
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); // ความดัง 15%
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.08); // เล่นยาว 0.08 วินาที
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.08);
+    } catch (e) {
+        // บางเบราว์เซอร์อาจจะบล็อก Audio ถ้ายังไม่มี User Interaction
+    }
+}
+
+// 2. ฟังก์ชันสั่งให้สั่น (เฉพาะมือถือ)
+function triggerVibrate() {
+    if ("vibrate" in navigator) {
+        navigator.vibrate(30); // สั่นสั้นๆ 30 มิลลิวินาที
+    }
+}
+
+// 3. ดักจับการกดปุ่ม ปุ่มลิงก์ หรือ Card ทุกตัวในหน้าเว็บ
+document.addEventListener("click", function(event) {
+    // เช็กว่า Element ที่กดเป็น button, a, .btn, .card หรือลูกๆ ของมันหรือไม่
+    const target = event.target.closest("button, a, .btn, .card, select, input[type='submit'], input[type='button']");
+    if (target) {
+        playClickSound();  // ส่งเสียง
+        triggerVibrate();  // สั่งสั่น
+    }
+});
+</script>
 
 </body>
 </html>
