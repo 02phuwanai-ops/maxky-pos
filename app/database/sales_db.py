@@ -346,8 +346,7 @@ def init_db():
 # ==========================================
 
 def get_recent_sales(station_name: str = "จุดขายที่ 1", event_name: str = None):
-    # บังคับคืนค่าเป็น List ว่าง [] เพื่อล้างรายการ "ขายล่าสุด" ออกทั้งหมด
-    return []
+    init_db()
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
