@@ -149,34 +149,19 @@ def _rollback_sales(processed_items: list):
 # ขายล่าสุด
 # =====================================
 
-@router.get("/get_recent_sales")
 @router.get("/api/recent-sales")
 def recent_sales(
     station_name: Optional[str] = Query(None),
     station: Optional[str] = Query(None),
     event_name: Optional[str] = Query(None)
 ):
-    selected_station = station_name or station or "จุดขายที่ 1"
-    
-    try:
-        sales_data = get_recent_sales(selected_station, event_name)
-    except TypeError:
-        sales_data = get_recent_sales(selected_station)
-
-    try:
-        shift_summary = get_shift_sales_summary(selected_station, event_name)
-    except TypeError:
-        shift_summary = get_shift_sales_summary(selected_station)
-
-    total_count = shift_summary.get("total_items", len(sales_data)) if isinstance(shift_summary, dict) else len(sales_data)
-    total_rev = shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
-
+    # บังคับคืนค่าเป็นรายการว่าง และยอดเป็น 0 ทั้งหมด
     return {
         "success": True,
-        "sales": sales_data,
-        "count": total_count,
-        "total_count": total_count,
-        "revenue": total_rev
+        "sales": [],
+        "count": 0,
+        "total_count": 0,
+        "revenue": 0
     }
 
 
