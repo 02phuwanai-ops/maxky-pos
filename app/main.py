@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from fastapi.staticfiles import StaticFiles
 from app.routes.product import router as product_router
 from app.routes.backup import router as backup_router
 from app.routes.excel_export import router as excel_router
@@ -33,6 +32,9 @@ from app.database.stock_db import (
     cleanup_orphan_stock
 )
 
+# นำเข้าสคริปต์รีเซ็ต
+import app.reset_db
+
 # ==========================================
 # FastAPI
 # ==========================================
@@ -41,14 +43,11 @@ app = FastAPI(
     title="MAXKY POS",
     version="0.4"
 )
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static"
-)
+
 @app.get("/ping")
 def ping():
     return {"status": "alive"}
+
 # ==========================================
 # Templates
 # ==========================================
@@ -56,7 +55,6 @@ def ping():
 templates = Jinja2Templates(
     directory="app/templates"
 )
-
 
 # ==========================================
 # Static
@@ -67,7 +65,6 @@ app.mount(
     StaticFiles(directory="app/static"),
     name="static"
 )
-
 
 # ==========================================
 # Routers
@@ -91,7 +88,6 @@ app.include_router(excel_router)
 app.include_router(backup_router)
 app.include_router(product_router)
 
-
 # ==========================================
 # Database Startup
 # ==========================================
@@ -107,7 +103,6 @@ def startup():
     create_receive_table()
 
     cleanup_orphan_stock()
-
 
 # ==========================================
 # DEBUG ROUTES
@@ -125,7 +120,6 @@ def debug_routes():
         for route in app.routes
         if hasattr(route, "methods")
     ]
-
 
 # ==========================================
 # DEBUG ROUTER DETAILS
