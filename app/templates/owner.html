@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:42px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:35px;
+    font-size:20px;
+}
+
+.menu{
+    max-width:700px;
+    margin:auto;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+}
+
+.menu a{
+    text-decoration:none;
+}
+
+.card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:24px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.12);
+
+    transition:.2s;
+
+    cursor:pointer;
+
+}
+
+.card:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 8px 18px rgba(0,0,0,.18);
+
+}
+
+.left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.icon{
+
+    font-size:42px;
+
+}
+
+.title{
+
+    font-size:28px;
+
+    font-weight:bold;
+
+    color:#222;
+
+}
+
+.arrow{
+
+    font-size:28px;
+
+    color:#999;
+
+}
+
+</style>
+
+
+<h1>👑 MAXKY POS</h1>
+
+<div class="subtitle">
+OWNER CONTROL PANEL
+</div>
+
+
+<div class="menu">
+
+
+<!-- =====================================
+     Dashboard
+====================================== -->
+
+<a href="/dashboard">
+
+<div class="card">
+
+<div class="left">
+
+<div class="icon">
+📊
+</div>
+
+<div class="title">
+Dashboard
+</div>
+
+</div>
+
+<div class="arrow">
+➜
+</div>
+
+</div>
+
+</a>
+
+<!-- =====================================
+     Export PDF
+====================================== -->
+
+<a href="/export/pdf">
+
+<div class="card">
+
+<div class="left">
+
+<div class="icon">
+📄
+</div>
+
+<div class="title">
+Export PDF
+</div>
+
+</div>
+
+<div class="arrow">
+➜
+</div>
+
+</div>
+
+</a>
+
+
+<!-- =====================================
+     Export Excel
+====================================== -->
+
+<a href="/export/excel">
+
+<div class="card">
+
+<div class="left">
+
+<div class="icon">
+📊
+</div>
+
+<div class="title">
+Export Excel
+</div>
+
+</div>
+
+<div class="arrow">
+➜
+</div>
+
+</div>
+
+</a>
+
+
+<!-- =====================================
+     Backup Database
+====================================== -->
+
+<a href="/backup">
+
+<div class="card">
+
+<div class="left">
+
+<div class="icon">
+💾
+</div>
+
+<div class="title">
+Backup Database
+</div>
+
+</div>
+
+<div class="arrow">
+➜
+</div>
+
+</div>
+
+</a>
+
+
+<!-- =====================================
+     Logout
+====================================== -->
+
+<a href="/logout">
+
+<div class="card">
+
+<div class="left">
+
+<div class="icon">
+🚪
+</div>
+
+<div class="title">
+Logout
+</div>
+
+</div>
+
+<div class="arrow">
+➜
+</div>
+
+</div>
+
+</a>
+
+
+</div>
+
+
+{% endblock %}

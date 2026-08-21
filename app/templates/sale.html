@@ -1,0 +1,1631 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   MAXKY POS — JAPANESE MINIMALIST STYLE
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Sarabun:wght@400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Sarabun', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+.sale-page {
+    width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 28px 20px 120px;
+}
+
+/* --- Layout Header --- */
+.sale-header-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sale-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sale-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sale-title-icon {
+    font-size: 26px;
+    background: #ffffff;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    border: 1px solid #e2e8f0;
+}
+
+.event-box-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    padding: 6px 6px 6px 14px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.event-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.event-input {
+    width: 160px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+    transition: all .2s ease;
+}
+
+.event-input:focus {
+    background: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.station-select {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 14px;
+    font-weight: 700;
+    color: #4f46e5;
+    outline: none;
+    cursor: pointer;
+}
+
+.close-shift-btn {
+    border: 1px solid #fecdd3;
+    border-radius: 18px;
+    background: #ef4444;
+    color: #ffffff;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2);
+    white-space: nowrap;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.close-shift-btn:hover {
+    background: #dc2626;
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.3);
+}
+
+.header-row.row-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: stretch !important;
+}
+
+.sale-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 12px 20px;
+    color: #475569;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    white-space: nowrap;
+    margin: 0;
+    height: 100%;
+}
+
+.sale-count strong {
+    color: #0f172a;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: #f1f5f9;
+    padding: 2px 14px;
+    border-radius: 10px;
+}
+
+.undo-button {
+    border: 1px solid #fecdd3;
+    border-radius: 18px;
+    background: #fff5f5;
+    color: #e11d48;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.05);
+    white-space: nowrap;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.undo-button:hover {
+    background: #e11d48;
+    color: #ffffff;
+    border-color: #e11d48;
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.2);
+}
+
+/* --- Product Grid --- */
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.product-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+}
+
+.product-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: #cbd5e1;
+    border-radius: 6px 0 0 6px;
+}
+
+.product-name-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.product-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.product-price-badge {
+    font-size: 14px;
+    font-weight: 700;
+    color: #6366f1;
+    background: #e0e7ff;
+    padding: 3px 10px;
+    border-radius: 8px;
+}
+
+.size-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.size-button {
+    width: 100%;
+    height: 52px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.size-button:active {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.size-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #6366f1;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 2px solid white;
+}
+
+.product-card[data-category="เสื้อยืด"]::before { background: #3b82f6; }
+.product-card[data-category="เสื้อกีฬา"]::before { background: #10b981; }
+.product-card[data-category="เสื้อยืดแขนยาว"]::before { background: #8b5cf6; }
+.product-card[data-category="เสื้อกีฬาแขนยาว"]::before { background: #f59e0b; }
+.product-card[data-category="เสื้อฟอก"]::before { background: #f43f5e; }
+.product-card[data-category="กางเกง"]::before { background: #06b6d4; }
+.product-card[data-category="เสื้อคอกลม"]::before { background: #ec4899; }
+
+/* --- Cart Bottom Bar --- */
+.cart-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 40px), 600px);
+    max-width: 90%;
+    background: #0f172a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+.cart-bar.hidden {
+    display: none;
+}
+
+.cart-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.cart-count-pill {
+    background: #6366f1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.checkout-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    width: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* --- Modal Popup --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-container {
+    background: white;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-overlay.active .modal-container {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding-right: 2px;
+}
+
+.cart-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.cart-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cart-item-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.cart-item-sub {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.delete-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 2px 6px;
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: #f1f5f9;
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+}
+
+.qty-val {
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 20px;
+    text-align: center;
+    color: #0f172a;
+}
+
+.modal-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.pay-btn {
+    padding: 10px 4px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    text-align: center;
+}
+
+.pay-btn.selected {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+/* --- Quick Cash & Change Section --- */
+.cash-calculator-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+
+.quick-cash-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.quick-cash-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.quick-cash-btn:hover {
+    background: #e0e7ff;
+    border-color: #6366f1;
+    color: #4338ca;
+}
+
+.quick-cash-btn.clear-btn {
+    background: #fee2e2;
+    border-color: #fecdd3;
+    color: #dc2626;
+}
+
+.quick-cash-btn.clear-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.cash-input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.cash-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.cash-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    outline: none;
+    text-align: right;
+}
+
+.cash-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.change-display-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.change-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.change-amount {
+    font-size: 20px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.change-amount.negative {
+    color: #ef4444;
+    font-size: 14px;
+}
+
+.discount-input {
+    width: 120px;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    text-align: right;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.summary-box {
+    background: #f1f5f9;
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.summary-row.total {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 8px;
+    margin-top: 6px;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+}
+
+.btn-cancel {
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.btn-confirm {
+    padding: 12px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 15px;
+    transition: opacity 0.2s ease;
+}
+
+.btn-confirm:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* --- Recent Sales Table --- */
+.recent-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 24px;
+    margin-top: 28px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    width: 100%;
+}
+
+.recent-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 16px;
+}
+
+.recent-row {
+    display: grid;
+    grid-template-columns: 130px minmax(90px, 1fr) minmax(110px, 1.5fr) 50px 90px 80px;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.recent-time { color: #64748b; font-size: 13px; font-weight: 600; }
+.recent-event { color: #475569; font-size: 13px; font-weight: 600; background: #f1f5f9; padding: 3px 10px; border-radius: 8px; text-align: center; }
+.recent-product { color: #0f172a; font-weight: 700; font-size: 15px; }
+.recent-size { text-align: center; color: #0f172a; font-weight: 800; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 2px 8px; font-size: 13px; }
+.recent-price { text-align: right; color: #0f172a; font-weight: 800; font-size: 15px; }
+
+.recent-payment {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.pay-cash { background: #dcfce7; color: #166534; }
+.pay-transfer { background: #e0e7ff; color: #3730a3; }
+.pay-half { background: #fef3c7; color: #92400e; }
+
+#toast {
+    position: fixed; left: 50%; bottom: 32px;
+    transform: translateX(-50%);
+    background: #0f172a; color: #ffffff;
+    padding: 14px 24px; border-radius: 16px;
+    font-size: 15px; font-weight: 600;
+    display: none; z-index: 9999;
+}
+
+@media (max-width: 768px) {
+    .sale-page { padding: 14px 10px 100px; }
+    .header-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .header-row.row-2 { grid-template-columns: 1fr; }
+    .event-box-inline { width: 100%; justify-content: space-between; }
+    .event-input { flex: 1; width: auto; }
+    .product-list { grid-template-columns: 1fr; gap: 14px; }
+    .product-card { padding: 16px; }
+    .recent-box { padding: 16px 12px; }
+    .recent-row {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto auto;
+        gap: 6px;
+        padding: 10px 4px;
+    }
+    .recent-time { grid-column: 1 / -1; font-size: 12px; color: #94a3b8; }
+    .recent-product { font-size: 14px; }
+    .recent-price { grid-column: 2; grid-row: 2; font-size: 15px; }
+    .recent-payment { grid-column: 2; grid-row: 3; justify-self: end; }
+    .cart-bar { width: calc(100% - 20px); padding: 10px 16px; bottom: 10px; }
+    .modal-container { padding: 18px; margin: 10px; }
+    .quick-cash-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ล็อคความสูงกล่องรายการขายล่าสุดให้อยู่ที่ 5 บรรทัด */
+    #recent {
+        max-height: 280px !important;
+        overflow-y: auto !important;
+        padding-right: 4px;
+    }
+
+    /* จัดเรียงรายการขายล่าสุดในมือถือให้เป็นแถวสวยงามคล้ายคอม */
+@media (max-width: 768px) {
+    #recent {
+        overflow-x: auto !important; /* ปัดซ้าย-ขวาดูรายการเพิ่มได้ */
+        max-height: 280px !important;
+        overflow-y: auto !important;
+    }
+
+    #recent .recent-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        white-space: nowrap !important;
+        min-width: 500px !important; /* จัดระยะห่างไม่ให้เบียดกัน */
+        padding: 8px 12px !important;
+        gap: 8px !important;
+    }
+
+    /* ปรับแต่งขนาดตัวอักษรให้อ่านง่ายพอดีจอ */
+    #recent .recent-time { font-size: 12px !important; color: #64748b; }
+    #recent .recent-event { font-size: 13px !important; }
+    #recent .recent-product { font-size: 14px !important; font-weight: 600; }
+    #recent .recent-size { font-size: 12px !important; }
+    #recent .recent-price { font-size: 14px !important; font-weight: bold; }
+    #recent .recent-payment { font-size: 11px !important; padding: 2px 8px !important; }
+}
+</style>
+
+<div class="sale-page">
+
+    <!-- Header Section -->
+    <div class="sale-header-container">
+        <div class="header-row">
+            <div class="sale-title-group">
+                <div class="sale-title-icon">🛒</div>
+                <h1 class="sale-title">ขายสินค้า</h1>
+            </div>
+
+            <div class="event-box-inline">
+                <span class="event-label">📍 จุดขาย:</span>
+                <select id="stationSelect" class="station-select" onchange="loadRecentSales()">
+                    <option value="จุดขายที่ 1">จุดขายที่ 1</option>
+                    <option value="จุดขายที่ 2">จุดขายที่ 2</option>
+                    <option value="จุดขายที่ 3">จุดขายที่ 3</option>
+                </select>
+            </div>
+
+            <div class="event-box-inline">
+                <span class="event-label">🎪 ชื่องาน</span>
+                <input type="text" id="eventName" class="event-input" placeholder="พิมพ์ชื่องาน..." autocomplete="off" oninput="saveEventName()">
+            </div>
+        </div>
+
+        <div class="header-row row-2">
+            <div class="sale-count">
+                <span>ขายรอบนี้</span>
+                <strong id="saleCount">0</strong>
+                <span>ตัว</span>
+            </div>
+
+            <button id="undoButton" class="undo-button" onclick="undoSale()">
+                ↩ ยกเลิกการขายล่าสุด
+            </button>
+
+            <button type="button" class="close-shift-btn" onclick="openCloseShiftModal()">
+                🔒 สรุป & ปิดยอดประจำวัน
+            </button>
+        
+        </div>
+    </div>
+
+    <!-- Product List -->
+    <div class="product-list">
+        {% for product in products %}
+        <div class="product-card" data-category="{{ product.name }}">
+            <div class="product-name-container">
+                <div class="product-name">
+                    👕 {{ product.name }}
+                </div>
+                {% if product.price is defined and product.price %}
+                <span class="product-price-badge">{{ product.price }} ฿</span>
+                {% endif %}
+            </div>
+
+            <div class="size-grid">
+                {% for size in product.sizes %}
+                <button
+                    class="size-button"
+                    id="btn-{{ product.name }}-{{ size }}"
+                    data-price="{{ product.price }}"
+                    onclick="addToCart('{{ product.name }}', '{{ size }}', {{ product.price | default(0) }})"
+                >
+                    {{ size }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Recent Sales Table -->
+    <div class="recent-box">
+        <div class="recent-title">🧾 ขายล่าสุด</div>
+        <div id="recent">กำลังโหลด...</div>
+    </div>
+
+</div>
+
+<!-- Cart Bottom Bar -->
+<div id="cartBar" class="cart-bar hidden">
+    <div class="cart-info">
+        <span class="cart-count-pill" id="cartCount">0 ตัว</span>
+        <span style="color: #cbd5e1; font-size: 14px; font-weight: 600;">เลือกไว้ในตะกร้า</span>
+    </div>
+    <button class="checkout-btn" onclick="openCheckoutModal()">
+        <span>สรุปรายการขาย</span>
+        <span>➔</span>
+    </button>
+</div>
+
+<!-- Modal Popup ชำระเงิน -->
+<div id="checkoutModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">สรุปรายการขาย</h3>
+            <button class="modal-close-btn" onclick="closeCheckoutModal()">✕</button>
+        </div>
+
+        <div class="cart-items-list" id="modalCartItems"></div>
+
+        <div class="modal-field-group">
+            <div>
+                <label style="font-weight:700; font-size:14px; color:#475569;">ช่องทางการชำระเงิน</label>
+                <div class="payment-options">
+                    <button class="pay-btn selected" onclick="selectPayment('เงินสด', this)">💵 เงินสด</button>
+                    <button class="pay-btn" onclick="selectPayment('โอนเงิน', this)">📲 โอนเงิน</button>
+                    <button class="pay-btn" onclick="selectPayment('คนละครึ่ง', this)">🤝 คนละครึ่ง</button>
+                </div>
+            </div>
+
+            <div class="modal-field" style="margin-top: 6px;">
+                <label style="font-weight:700; font-size:14px; color:#475569;">ส่วนลดเพิ่มเติม (บาท)</label>
+                <input type="number" id="discountInput" class="discount-input" value="0" min="0" oninput="calculateTotal()">
+            </div>
+        </div>
+
+        <!-- เครื่องคิดเงินทอนเงินสด -->
+        <div id="cashCalculatorBox" class="cash-calculator-box">
+            <label style="font-weight:700; font-size:13px; color:#64748b; margin-bottom:6px; display:block;">💵 คำนวณเงินทอน (รับเงินสด)</label>
+            <div class="quick-cash-grid">
+                <button class="quick-cash-btn" onclick="setCashReceived('exact')">พอดี</button>
+                <button class="quick-cash-btn" onclick="addCashReceived(100)">+100</button>
+                <button class="quick-cash-btn" onclick="addCashReceived(500)">+500</button>
+                <button class="quick-cash-btn" onclick="addCashReceived(1000)">+1,000</button>
+                <button class="quick-cash-btn clear-btn" onclick="clearCashReceived()">ล้าง</button>
+            </div>
+            <div class="cash-input-row">
+                <span style="font-size:14px; font-weight:700; color:#334155;">รับเงินมา:</span>
+                <div class="cash-input-wrapper">
+                    <input type="number" id="cashReceivedInput" class="cash-input" placeholder="0" oninput="calculateChange()">
+                </div>
+                <span style="font-size:14px; font-weight:700; color:#334155;">บาท</span>
+            </div>
+            <div class="change-display-box">
+                <span class="change-label">เงินทอน:</span>
+                <span id="changeAmountText" class="change-amount">0 บาท</span>
+            </div>
+        </div>
+
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>ราคารวม</span>
+                <span id="subtotalText">0 บาท</span>
+            </div>
+            <div class="summary-row">
+                <span>ส่วนลด</span>
+                <span id="discountText">0 บาท</span>
+            </div>
+            <div class="summary-row total">
+                <span>ยอดสุทธิ</span>
+                <span id="finalTotalText" style="color:#10b981;">0 บาท</span>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeCheckoutModal()">ยกเลิก</button>
+            <button id="btnConfirmSale" class="btn-confirm" onclick="submitBatchSale()">ยืนยันการขาย</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Popup สรุปและปิดยอดประจำวัน -->
+<div id="closeShiftModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header" style="border-bottom: 1px solid #fee2e2; padding-bottom: 12px;">
+            <h3 class="modal-title" style="color: #ef4444;">📊 สรุปยอดขายก่อนปิดรอบ</h3>
+            <button class="modal-close-btn" onclick="closeShiftModalHide()">✕</button>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 14px; color: #64748b; font-weight: 600; margin-bottom: 4px;">
+                จุดขาย: <span id="modalStationName" style="color: #0f172a; font-weight: 800;">-</span>
+            </div>
+            <div style="font-size: 14px; color: #64748b; font-weight: 600; margin-bottom: 12px;">
+                ชื่องาน: <span id="modalEventName" style="color: #0f172a; font-weight: 800;">-</span>
+            </div>
+
+            <div class="summary-box" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px;">
+                <div class="summary-row">
+                    <span>จำนวนขายทั้งหมด</span>
+                    <strong id="modalTotalItems" style="color: #0f172a;">0 ตัว</strong>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 8px 0;">
+                <div class="summary-row">
+                    <span>💵 เงินสด</span>
+                    <strong id="modalCash">0.00 บาท</strong>
+                </div>
+                <div class="summary-row">
+                    <span>📲 โอนเงิน</span>
+                    <strong id="modalTransfer">0.00 บาท</strong>
+                </div>
+                <div class="summary-row">
+                    <span>🤝 คนละครึ่ง</span>
+                    <strong id="modalHalf">0.00 บาท</strong>
+                </div>
+                <div class="summary-row total" style="margin-top: 10px; font-size: 20px;">
+                    <span>ยอดรวมทั้งหมด</span>
+                    <span id="modalTotalRevenue" style="color: #4f46e5;">0.00 บาท</span>
+                </div>
+            </div>
+
+            <div style="background: #fffbebfb; border: 1px solid #fef3c7; border-radius: 12px; padding: 10px; font-size: 13px; color: #b45309;">
+                ⚠️ พอกดยืนยันปิดยอด ยอดขายบนหน้าจอนี้จะถูกรีเซ็ตเป็น <strong>0</strong> บาททันที เพื่อเริ่มรอบถัดไป
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeShiftModalHide()">ยกเลิก</button>
+            <!-- ✏️ แก้ไข: เปลี่ยนจาก confirmCloseShift() เป็น closeShift() และใส่ type="button" -->
+            <button type="button" class="btn-confirm" style="background: #ef4444;" onclick="closeShift()">ยืนยันปิดยอดประจำวัน</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let cart = [];
+let selectedPaymentMethod = 'เงินสด';
+let currentFinalTotal = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadSavedEventName();
+    loadRecentSales();
+
+    const eventInput = document.getElementById("eventName");
+    if (eventInput) {
+        eventInput.addEventListener("input", () => {
+            saveEventName();
+            loadRecentSales();
+        });
+        eventInput.addEventListener("change", () => {
+            saveEventName();
+            loadRecentSales();
+        });
+    }
+});
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.textContent = message;
+        toast.style.display = "block";
+        setTimeout(() => { toast.style.display = "none"; }, 1500);
+    }
+}
+
+function getSelectedStation() {
+    const select = document.getElementById('stationSelect');
+    return select ? select.value : 'จุดขายที่ 1';
+}
+
+function saveEventName() {
+    const station = getSelectedStation();
+    const eventInput = document.getElementById('eventName');
+    const val = eventInput ? eventInput.value : '';
+    localStorage.setItem('saved_event_name_' + station, val);
+}
+
+function loadSavedEventName() {
+    const station = getSelectedStation();
+    const saved = localStorage.getItem('saved_event_name_' + station);
+    const eventInput = document.getElementById('eventName');
+    if (eventInput) eventInput.value = saved ? saved : '';
+}
+
+/* --- จัดการ ตะกร้าสินค้า --- */
+function addToCart(category, size, price) {
+    const itemPrice = parseFloat(price) || 0;
+    const existing = cart.find(i => i.category === category && i.size === size);
+    
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({ category, size, price: itemPrice, qty: 1 });
+    }
+    updateCartUI();
+    
+    const modal = document.getElementById("checkoutModal");
+    if (modal && modal.classList.contains("active")) {
+        renderModalCart();
+    }
+}
+
+function updateQty(category, size, change) {
+    const index = cart.findIndex(i => i.category === category && i.size === size);
+    if (index === -1) return;
+
+    cart[index].qty += change;
+
+    if (cart[index].qty <= 0) {
+        removeFromCart(category, size);
+    } else {
+        const qtyValEl = document.getElementById(`qty-val-${category}-${size}`);
+        const subPriceEl = document.getElementById(`sub-price-${category}-${size}`);
+        
+        if (qtyValEl) qtyValEl.textContent = cart[index].qty;
+        if (subPriceEl) subPriceEl.textContent = `${(cart[index].price * cart[index].qty).toLocaleString()} บาท`;
+        
+        calculateTotal();
+    }
+    updateCartUI();
+}
+
+function removeFromCart(category, size) {
+    cart = cart.filter(i => !(i.category === category && i.size === size));
+    renderModalCart();
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+    const cartBar = document.getElementById("cartBar");
+    const cartCount = document.getElementById("cartCount");
+
+    if (cartCount) cartCount.textContent = totalQty + " ตัว";
+
+    if (cartBar) {
+        if (totalQty > 0) {
+            cartBar.classList.remove("hidden");
+        } else {
+            cartBar.classList.add("hidden");
+            closeCheckoutModal();
+        }
+    }
+
+    document.querySelectorAll('.size-button').forEach(btn => {
+        const badge = btn.querySelector('.size-badge');
+        if (badge) badge.remove();
+    });
+
+    cart.forEach(item => {
+        const btn = document.getElementById(`btn-${item.category}-${item.size}`);
+        if (btn) {
+            const badge = document.createElement('span');
+            badge.className = 'size-badge';
+            badge.textContent = item.qty;
+            btn.appendChild(badge);
+        }
+    });
+}
+
+/* --- จัดการ Pop-up Modal --- */
+function openCheckoutModal() {
+    renderModalCart();
+    const modal = document.getElementById("checkoutModal");
+    if (modal) modal.classList.add("active");
+    clearCashReceived();
+}
+
+function closeCheckoutModal() {
+    const modal = document.getElementById("checkoutModal");
+    if (modal) modal.classList.remove("active");
+}
+
+function renderModalCart() {
+    const container = document.getElementById("modalCartItems");
+    if (!container) return;
+
+    if (cart.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:12px;">ไม่มีสินค้าในตะกร้า</div>';
+        calculateTotal();
+        return;
+    }
+
+    container.innerHTML = cart.map(item => `
+        <div class="cart-item-row">
+            <div class="cart-item-info">
+                <div class="cart-item-title">${item.category}</div>
+                <div class="cart-item-sub">ไซส์: ${item.size} • <span id="sub-price-${item.category}-${item.size}">${(item.price * item.qty).toLocaleString()} บาท</span></div>
+            </div>
+            <div class="cart-item-actions">
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="updateQty('${item.category}', '${item.size}', -1)">-</button>
+                    <span class="qty-val" id="qty-val-${item.category}-${item.size}">${item.qty}</span>
+                    <button class="qty-btn" onclick="updateQty('${item.category}', '${item.size}', 1)">+</button>
+                </div>
+                <button class="delete-btn" title="ลบรายการ" onclick="removeFromCart('${item.category}', '${item.size}')">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+    
+    calculateTotal();
+}
+
+function selectPayment(method, btn) {
+    selectedPaymentMethod = method;
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    const cashBox = document.getElementById('cashCalculatorBox');
+    if (cashBox) {
+        cashBox.style.display = (method === 'เงินสด') ? 'block' : 'none';
+    }
+    calculateChange();
+}
+
+function calculateTotal() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const discountInput = document.getElementById("discountInput");
+    const discount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+    currentFinalTotal = Math.max(0, subtotal - discount);
+
+    const subtotalEl = document.getElementById("subtotalText");
+    const discountEl = document.getElementById("discountText");
+    const finalTotalEl = document.getElementById("finalTotalText");
+
+    if (subtotalEl) subtotalEl.textContent = subtotal.toLocaleString() + " บาท";
+    if (discountEl) discountEl.textContent = discount.toLocaleString() + " บาท";
+    if (finalTotalEl) finalTotalEl.textContent = currentFinalTotal.toLocaleString() + " บาท";
+
+    calculateChange();
+}
+
+/* --- เครื่องคิดเงินทอน --- */
+function setCashReceived(val) {
+    const input = document.getElementById('cashReceivedInput');
+    if (input) {
+        input.value = (val === 'exact') ? currentFinalTotal : val;
+    }
+    calculateChange();
+}
+
+function addCashReceived(val) {
+    const input = document.getElementById('cashReceivedInput');
+    if (input) {
+        const currentVal = parseFloat(input.value) || 0;
+        input.value = currentVal + val;
+    }
+    calculateChange();
+}
+
+function clearCashReceived() {
+    const input = document.getElementById('cashReceivedInput');
+    if (input) input.value = '';
+    calculateChange();
+}
+
+function calculateChange() {
+    const confirmBtn = document.getElementById('btnConfirmSale');
+    if (selectedPaymentMethod !== 'เงินสด') {
+        if (confirmBtn) confirmBtn.disabled = false;
+        return;
+    }
+
+    const inputEl = document.getElementById('cashReceivedInput');
+    const inputVal = inputEl ? inputEl.value : '';
+    const cashReceived = parseFloat(inputVal) || 0;
+    const change = cashReceived - currentFinalTotal;
+    const changeTextEl = document.getElementById('changeAmountText');
+
+    if (!changeTextEl) return;
+
+    if (inputVal === '' || cashReceived === 0) {
+        changeTextEl.textContent = '0 บาท';
+        changeTextEl.className = 'change-amount';
+        if (confirmBtn) confirmBtn.disabled = false;
+    } else if (change < 0) {
+        changeTextEl.textContent = `เงินไม่พอ (ขาดอีก ${Math.abs(change).toLocaleString()} บาท)`;
+        changeTextEl.className = 'change-amount negative';
+        if (confirmBtn) confirmBtn.disabled = true;
+    } else {
+        changeTextEl.textContent = `${change.toLocaleString()} บาท`;
+        changeTextEl.className = 'change-amount';
+        if (confirmBtn) confirmBtn.disabled = false;
+    }
+}
+
+/* --- ส่งข้อมูลไปยัง Back-end (รองรับ Offline Mode) --- */
+/* --- ส่งข้อมูลไปยัง Back-end (รองรับ Offline Mode ชัวร์ 100%) --- */
+async function submitBatchSale() {
+    if (cart.length === 0) return;
+
+    const discountInput = document.getElementById("discountInput");
+    const discount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+    const eventInput = document.getElementById("eventName");
+    const eventName = eventInput ? eventInput.value.trim() : "";
+
+    const payload = {
+        cart: cart,
+        discount: discount,
+        payment_method: selectedPaymentMethod,
+        event_name: eventName,
+        station_name: getSelectedStation()
+    };
+
+    // 🔴 1. ถ้าปิดเน็ตแน่นอน (navigator.onLine = false) ให้ลงมือถือทันที
+    if (!navigator.onLine) {
+        await processOfflineSave(payload);
+        return;
+    }
+
+    // 🟢 2. ถ้าเปิดเน็ตอยู่ ให้พยายามยิงขึ้น Server
+    try {
+        const response = await fetch("/api/sell", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast("✅ บันทึกการขายเรียบร้อย");
+            resetCartAndModal();
+            await loadRecentSales();
+        } else {
+            showToast(data.message || "❌ ขายไม่สำเร็จ");
+        }
+    } catch (error) {
+        // 🔴 3. ถ้ายิงไป Server แล้วล้มเหลว (เน็ตหลุด/Server ดับ) ให้ลงมือถือแทนทันที
+        console.warn("ยิง API ไม่สำเร็จ สลับไปใช้ Offline Mode");
+        await processOfflineSave(payload);
+    }
+}
+
+// ฟังก์ชันช่วยบันทึกลงเครื่องและล้างตะกร้า
+async function processOfflineSave(payload) {
+    if (typeof saveSaleOffline === 'function') {
+        const saved = await saveSaleOffline(payload);
+        if (saved) {
+            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
+            resetCartAndModal();
+        } else {
+            alert("❌ ไม่สามารถบันทึกข้อมูล Offline ลงเครื่องได้");
+        }
+    } else {
+        alert("❌ ไม่พบระบบบันทึก Offline ใน base.html");
+    }
+}
+
+function resetCartAndModal() {
+    cart = [];
+    updateCartUI();
+    closeCheckoutModal();
+    const discountInput = document.getElementById("discountInput");
+    if (discountInput) discountInput.value = 0;
+}
+
+/* --- ดึงข้อมูลการขายล่าสุด --- */
+async function loadRecentSales() {
+    if (!navigator.onLine) return; // หาก Offline อยู่ข้ามการดึงข้อมูลจาก Server
+
+    const stationName = getSelectedStation();
+    const eventInput = document.getElementById("eventName") || document.getElementById("event_name_input") || document.getElementById("event_name");
+    const eventName = eventInput ? eventInput.value.trim() : "";
+
+    try {
+        let url = `/get_recent_sales?station=${encodeURIComponent(stationName)}&station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`;
+        
+        let response = await fetch(url);
+        
+        if (!response.ok) {
+            url = `/api/recent-sales?station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`;
+            response = await fetch(url);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            const saleCountEl = document.getElementById("saleCount");
+            if (saleCountEl) {
+                const countVal = (data.total_items !== undefined) ? data.total_items : 
+                                 (data.count !== undefined) ? data.count : 
+                                 (data.total_count !== undefined) ? data.total_count : 0;
+                saleCountEl.textContent = countVal;
+            }
+
+            const revenueEl = document.getElementById("headerRevenue");
+            if (revenueEl) {
+                const revenueVal = (data.total_revenue !== undefined) ? data.total_revenue : 
+                                   (data.revenue !== undefined) ? data.revenue : 0;
+                revenueEl.textContent = Number(revenueVal).toLocaleString();
+            }
+
+            const recentContainer = document.getElementById("recent");
+            if (recentContainer) {
+                const sales = data.sales || [];
+                if (sales.length === 0) {
+                    recentContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;">ยังไม่มีรายการขายในรอบนี้</div>';
+                } else {
+                    recentContainer.innerHTML = sales.map(item => {
+                        let payClass = "pay-cash";
+                        const payMethod = item.payment_method || "เงินสด";
+                        if (payMethod === "โอนเงิน") payClass = "pay-transfer";
+                        else if (payMethod === "คนละครึ่ง") payClass = "pay-half";
+
+                        return `
+                        <div class="recent-row">
+                            <span class="recent-time">${item.datetime || '-'}</span>
+                            <span class="recent-event">${item.event_name || 'ทั่วไป'}</span>
+                            <span class="recent-product">${item.category || '-'}</span>
+                            <span class="recent-size">${item.size || '-'}</span>
+                            <span class="recent-price">${(item.price || 0).toLocaleString()} ฿</span>
+                            <span class="recent-payment ${payClass}">${payMethod}</span>
+                        </div>
+                    `}).join('');
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error loading recent sales:", error);
+    }
+}
+
+/* --- ยกเลิกการขายล่าสุด (Undo) --- */
+async function undoSale() {
+    if (!confirm("⚠️ คุณต้องการยกเลิกรายการขายล่าสุดใช่หรือไม่?")) {
+        return;
+    }
+
+    const stationName = typeof getSelectedStation === "function" ? getSelectedStation() : "จุดขายที่ 1";
+    const eventInput = document.getElementById("eventName");
+    const eventName = eventInput ? eventInput.value.trim() : "";
+
+    try {
+        let response = await fetch("/api/undo-sale", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ station_name: stationName, event_name: eventName })
+        });
+        let data = await response.json();
+
+        if (!data.success && data.message && data.message.includes("ไม่มีรายการขาย")) {
+            response = await fetch("/api/undo-sale", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ station_name: "", event_name: eventName })
+            });
+            data = await response.json();
+        }
+
+        if (data.success) {
+            showToast(data.message || "↩️ ยกเลิกรายการล่าสุดเรียบร้อย");
+            await loadRecentSales();
+        } else {
+            alert(data.message || "❌ ไม่สามารถยกเลิกรายการได้");
+        }
+    } catch (error) {
+        console.error("Error undoing sale:", error);
+        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+}
+
+/* --- เปิด/ปิด Modal สรุปและปิดยอดประจำวัน --- */
+async function openCloseShiftModal() {
+    const stationName = getSelectedStation();
+    const eventInput = document.getElementById("eventName");
+    const eventName = eventInput ? eventInput.value.trim() : "";
+
+    const modalStation = document.getElementById("modalStationName");
+    const modalEvent = document.getElementById("modalEventName");
+    if (modalStation) modalStation.textContent = stationName;
+    if (modalEvent) modalEvent.textContent = eventName || "ไม่ได้ระบุ";
+
+    try {
+        const response = await fetch(`/api/close-shift-summary?station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const elItems = document.getElementById("modalTotalItems");
+            const elCash = document.getElementById("modalCash");
+            const elTransfer = document.getElementById("modalTransfer");
+            const elHalf = document.getElementById("modalHalf");
+            const elTotal = document.getElementById("modalTotalRevenue");
+
+            if (elItems) elItems.textContent = `${data.total_items || 0} ตัว`;
+            if (elCash) elCash.textContent = `${(data.cash || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} บาท`;
+            if (elTransfer) elTransfer.textContent = `${(data.transfer || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} บาท`;
+            if (elHalf) elHalf.textContent = `${(data.half || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} บาท`;
+            if (elTotal) elTotal.textContent = `${(data.total_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} บาท`;
+
+            const modal = document.getElementById("closeShiftModal");
+            if (modal) modal.classList.add("active");
+        } else {
+            showToast(data.message || "❌ ไม่สามารถดึงข้อมูลสรุปได้");
+        }
+    } catch (error) {
+        console.error("Error fetching shift summary:", error);
+        showToast("❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+    }
+}
+
+function closeShiftModalHide() {
+    const modal = document.getElementById("closeShiftModal");
+    if (modal) modal.classList.remove("active");
+}
+
+/* --- ยืนยันการปิดยอดประจำวัน --- */
+async function closeShift() {
+    const currentStation = getSelectedStation(); 
+    const eventInput = document.getElementById("eventName");
+    const currentEvent = eventInput ? eventInput.value.trim() : "";
+
+    try {
+        const response = await fetch('/api/close-shift', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                station_name: currentStation, 
+                event_name: currentEvent 
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message || "✅ ปิดยอดประจำวันเรียบร้อย");
+
+            if (confirm("🔒 ปิดยอดเรียบร้อยแล้ว! ต้องการแชร์สรุปยอดนี้เข้า LINE เลยไหมครับ?")) {
+                if (typeof shareToLine === "function") {
+                    shareToLine();
+                }
+            }
+
+            closeShiftModalHide();
+            await loadRecentSales(); 
+
+        } else {
+            showToast(result.message || "❌ ไม่สามารถปิดยอดได้");
+        }
+    } catch (error) {
+        console.error("Error closing shift:", error);
+        showToast("❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+}
+
+function onStationChange() {
+    loadSavedEventName();
+    loadRecentSales();
+}
+
+/* --- 💚 ฟังก์ชันแชร์สรุปยอดเข้า LINE --- */
+function shareToLine() {
+    const station = getSelectedStation();
+    const eventInput = document.getElementById("eventName");
+    const eventName = eventInput ? eventInput.value.trim() : "ทั่วไป";
+    
+    const countEl = document.getElementById("saleCount");
+    const count = countEl ? countEl.textContent.trim() : "0";
+    
+    const revenueEl = document.getElementById("headerRevenue");
+    const revenue = revenueEl ? revenueEl.textContent.trim() : "0";
+
+    const now = new Date();
+    const timeStr = now.toLocaleDateString('th-TH', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+    });
+
+    const message = `📊 สรุปยอดขายประจำวัน\n` +
+                    `------------------------\n` +
+                    `📍 จุดขาย: ${station}\n` +
+                    `🎪 งาน: ${eventName}\n` +
+                    `📅 วัน/เวลา: ${timeStr} น.\n` +
+                    `------------------------\n` +
+                    `📦 จำนวนที่ขายได้: ${count} ตัว\n` +
+                    `💰 รายได้รวม: ${revenue} บาท\n` +
+                    `------------------------\n` +
+                    `ส่งจากระบบ POS`;
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(message);
+    } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = message;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+    }
+
+    const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(message)}`;
+    window.open(lineUrl, '_blank');
+}
+</script>
+
+{% endblock %}

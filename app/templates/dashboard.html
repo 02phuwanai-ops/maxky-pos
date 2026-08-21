@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.section-title{
+    margin:40px 0 20px;
+    font-size:28px;
+}
+
+.menu-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+    transition:.25s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+
+.icon{
+    font-size:48px;
+    margin-bottom:10px;
+}
+
+.number{
+    font-size:38px;
+    font-weight:bold;
+    color:#222;
+}
+
+.label{
+    margin-top:10px;
+    color:#666;
+    font-size:18px;
+}
+
+.menu-card{
+    text-decoration:none;
+    color:black;
+}
+
+.menu-card .card{
+    cursor:pointer;
+}
+
+.list-card{
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+}
+
+.list-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid #eee;
+}
+
+.list-item:last-child{
+    border-bottom:none;
+}
+
+.badge{
+    background:#222;
+    color:white;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:14px;
+}
+
+.badge-danger{
+    background:#d9534f;
+}
+
+
+/* ===== Live Stock ===== */
+
+.stock-live{
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+}
+
+.stock-title{
+    font-size:24px;
+    margin-bottom:20px;
+    font-weight:bold;
+}
+
+.stock-group{
+    background:#fafafa;
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+.stock-name{
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+.size-box{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.size-card{
+    padding:12px 18px;
+    border-radius:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+    font-size:18px;
+    font-weight:bold;
+}
+
+.stock-good{
+    background:#d9f7d9;
+    color:#087f23;
+}
+
+.stock-warning{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.stock-empty{
+    background:#ffd6d6;
+    color:#b00020;
+}
+
+.stock-item:last-child{
+    border-bottom:none;
+}
+
+</style>
+
+
+<script>
+
+function loadLiveStock(){
+
+    fetch("/api/dashboard-stock")
+
+    .then(response=>response.json())
+
+    .then(data=>{
+
+        document.getElementById("liveTotal").innerHTML=data.total;
+
+        let html="";
+
+        for(let product in data.stock){
+
+            html += `
+
+            <div class="stock-group">
+
+                <div class="stock-name">
+
+                    👕 ${product}
+
+                </div>
+
+                <div class="size-box">
+
+            `;
+
+            data.stock[product].forEach(function(item){
+
+                let status="stock-good";
+
+                if(item.quantity<=0){
+
+                    status="stock-empty";
+
+                }
+
+                else if(item.quantity<=3){
+
+                    status="stock-warning";
+
+                }
+
+                html += `
+
+                <div class="size-card ${status}">
+
+                    ${item.size}
+
+                    :
+
+                    <b>${item.quantity}</b>
+
+                </div>
+
+                `;
+
+            });
+
+            html += `
+
+                </div>
+
+            </div>
+
+            `;
+
+        }
+
+        document.getElementById("liveStock").innerHTML=html;
+
+    });
+
+}
+
+
+window.onload=function(){
+
+    loadLiveStock();
+
+    setInterval(loadLiveStock,2000);
+
+}
+
+</script>
+
+
+<h1>📊 Dashboard</h1>
+
+
+<!-- =====================================
+     สรุปยอด
+===================================== -->
+
+<div class="menu-grid">
+
+    <div class="card">
+
+        <div class="icon">💰</div>
+
+        <div class="number">
+            {{ count }}
+        </div>
+
+        <div class="label">
+            ขายวันนี้
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="icon">💵</div>
+
+        <div class="number">
+            {{ revenue }}
+        </div>
+
+        <div class="label">
+            รายได้
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="icon">📈</div>
+
+        <div class="number">
+            {{ profit }}
+        </div>
+
+        <div class="label">
+            กำไร
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================
+     เมนูด่วน
+===================================== -->
+
+<h2 class="section-title">
+    ⚡ เมนูด่วน
+</h2>
+
+
+<div class="menu-grid">
+
+    <a class="menu-card" href="/sale">
+
+        <div class="card">
+
+            <div class="icon">
+                🛒
+            </div>
+
+            <div class="label">
+                ขายสินค้า
+            </div>
+
+        </div>
+
+    </a>
+
+
+    <a class="menu-card" href="/stock">
+
+        <div class="card">
+
+            <div class="icon">
+                📦
+            </div>
+
+            <div class="label">
+                Stock
+            </div>
+
+        </div>
+
+    </a>
+
+
+    <a class="menu-card" href="/receive">
+
+        <div class="card">
+
+            <div class="icon">
+                ➕
+            </div>
+
+            <div class="label">
+                รับสินค้า
+            </div>
+
+        </div>
+
+    </a>
+
+
+    <a class="menu-card" href="/history">
+
+        <div class="card">
+
+            <div class="icon">
+                📜
+            </div>
+
+            <div class="label">
+                History
+            </div>
+
+        </div>
+
+    </a>
+
+    <a class="menu-card" href="/products">
+        <div class="card">
+            <div class="icon">🛍️</div>
+            <div class="label">Products</div>
+        </div>
+    </a>
+
+</div>
+
+
+<!-- =====================================
+     Live Stock
+===================================== -->
+
+<h2 class="section-title">
+    📦 Live Stock
+</h2>
+
+
+<div class="stock-live">
+
+    <div class="stock-title">
+
+        Stock ทั้งหมด
+
+        <b id="liveTotal">0</b>
+
+        ตัว
+
+    </div>
+
+
+    <div id="liveStock">
+
+        กำลังโหลด...
+
+    </div>
+
+</div>
+
+
+<!-- =====================================
+     Top Selling
+===================================== -->
+
+<h2 class="section-title">
+    🏆 Top Selling
+</h2>
+
+
+<div class="list-card">
+
+{% if top_sales %}
+
+    {% for item in top_sales %}
+
+    <div class="list-item">
+
+        <div>
+
+            {{ loop.index }}.
+            {{ item[0] }}
+            {{ item[1] }}
+
+        </div>
+
+        <span class="badge">
+
+            {{ item[2] }} ตัว
+
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+{% else %}
+
+<p>
+    ยังไม่มีข้อมูลการขาย
+</p>
+
+{% endif %}
+
+</div>
+
+
+<!-- =====================================
+     สินค้าใกล้หมด
+     เก็บไว้ด้านล่าง เพราะเป็นรายละเอียด
+===================================== -->
+
+<hr style="margin:50px 0;">
+
+
+<h2 class="section-title">
+
+    ⚠️ สินค้าใกล้หมด
+
+</h2>
+
+
+<div class="list-card">
+
+{% if low_stock_items %}
+
+<table style="width:100%;border-collapse:collapse;">
+
+<tr style="font-weight:bold;">
+
+<td>
+    สินค้า
+</td>
+
+<td>
+    ไซส์
+</td>
+
+<td align="right">
+    คงเหลือ
+</td>
+
+</tr>
+
+
+{% for item in low_stock_items %}
+
+<tr>
+
+<td>
+    {{ item[0] }}
+</td>
+
+<td>
+    {{ item[1] }}
+</td>
+
+<td align="right">
+    {{ item[2] }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% else %}
+
+<p style="text-align:center;font-size:20px;color:green;">
+
+    ✅ ไม่มีสินค้าใกล้หมด
+
+</p>
+
+{% endif %}
+
+</div>
+
+
+{% endblock %}

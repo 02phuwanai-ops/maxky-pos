@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.receive-page{
+    max-width:900px;
+    margin:auto;
+}
+
+/* =========================
+   Title
+========================= */
+
+.receive-title{
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:18px;
+}
+
+/* =========================
+   Card
+========================= */
+
+.receive-card{
+    background:white;
+    border-radius:20px;
+    padding:22px;
+    margin-bottom:20px;
+    box-shadow:0 3px 12px rgba(0,0,0,.10);
+}
+
+/* =========================
+   Card Title
+========================= */
+
+.receive-card-title{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:18px;
+}
+
+/* =========================
+   Product / Size buttons
+========================= */
+
+.receive-page .product-btn,
+.receive-page .size-btn{
+
+    width:auto;
+
+    min-width:120px;
+
+    padding:16px 24px;
+
+    margin:5px;
+
+    border:none;
+
+    border-radius:14px;
+
+    background:#f1f1f1;
+
+    box-shadow:none;
+
+    font-size:19px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+
+}
+
+
+/* Hover */
+
+.receive-page .product-btn:hover,
+.receive-page .size-btn:hover{
+
+    background:#ff6b00;
+
+    color:white;
+
+    transform:translateY(-2px);
+
+}
+
+
+/* Active */
+
+.receive-page .product-btn.active,
+.receive-page .size-btn.active{
+
+    background:#ff6b00;
+
+    color:white;
+
+}
+
+
+/* =========================
+   Selected value
+========================= */
+
+.receive-selected{
+
+    width:100%;
+
+    padding:15px;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    border-radius:12px;
+
+    border:1px solid #ddd;
+
+    background:#fafafa;
+
+    box-sizing:border-box;
+
+    margin-top:12px;
+
+}
+
+
+/* =========================
+   Quantity
+========================= */
+
+#quantity{
+
+    width:100%;
+
+    padding:16px;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    text-align:center;
+
+    border-radius:12px;
+
+    border:1px solid #ddd;
+
+    box-sizing:border-box;
+
+}
+
+
+/* =========================
+   Save button
+========================= */
+
+.receive-save{
+
+    width:100%;
+
+    padding:18px;
+
+    border:none;
+
+    border-radius:15px;
+
+    background:#111;
+
+    color:white;
+
+    font-size:23px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+}
+
+
+.receive-save:hover{
+
+    background:#ff6b00;
+
+    transform:translateY(-2px);
+
+}
+
+
+/* =========================
+   Recent
+========================= */
+
+.receive-recent{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:22px;
+
+    margin-top:20px;
+
+    box-shadow:0 3px 12px rgba(0,0,0,.10);
+
+}
+
+
+.receive-recent-title{
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    margin-bottom:15px;
+
+}
+
+
+.receive-item{
+
+    padding:13px 0;
+
+    border-bottom:1px solid #eee;
+
+    font-size:18px;
+
+}
+
+
+.receive-item:last-child{
+
+    border-bottom:none;
+
+}
+
+
+/* =========================
+   Toast
+========================= */
+
+#toast{
+
+    position:fixed;
+
+    bottom:30px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:#111;
+
+    color:white;
+
+    padding:16px 30px;
+
+    border-radius:15px;
+
+    display:none;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    z-index:9999;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.25);
+
+}
+
+
+/* =========================
+   Mobile
+========================= */
+
+@media(max-width:600px){
+
+    .receive-page{
+
+        width:100%;
+
+    }
+
+    .receive-title{
+
+        font-size:24px;
+
+    }
+
+    .receive-card{
+
+        padding:18px;
+
+    }
+
+    .receive-page .product-btn,
+    .receive-page .size-btn{
+
+        min-width:100px;
+
+        padding:14px 18px;
+
+        font-size:17px;
+
+    }
+
+}
+
+</style>
+
+
+<script>
+
+/* =========================
+   เลือกสินค้า
+========================= */
+
+function setProduct(product, btn){
+
+    document.getElementById("category").value = product;
+
+    document.querySelectorAll(".product-btn").forEach(
+
+        b => b.classList.remove("active")
+
+    );
+
+    btn.classList.add("active");
+
+}
+
+
+/* =========================
+   เลือกไซส์
+========================= */
+
+function setSize(size,btn){
+
+    document.getElementById("size").value = size;
+
+    document.querySelectorAll(".size-btn").forEach(
+        b => b.classList.remove("active")
+    );
+
+    btn.classList.add("active");
+
+    loadCurrentStock();
+}
+
+function loadCurrentStock(){
+
+    const category =
+        document.getElementById("category").value;
+
+    const size =
+        document.getElementById("size").value;
+
+    const stockBox =
+        document.getElementById("currentStock");
+
+    if(category === "" || size === ""){
+
+        stockBox.innerHTML =
+            "Stock ปัจจุบัน: -";
+
+        return;
+    }
+
+    stockBox.innerHTML =
+        "กำลังตรวจสอบ Stock...";
+
+    fetch(
+        "/api/receive-stock?category="
+        + encodeURIComponent(category)
+        + "&size="
+        + encodeURIComponent(size)
+    )
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if(data.success){
+
+            stockBox.innerHTML =
+                "Stock ปัจจุบัน: "
+                + data.stock
+                + " ตัว";
+
+        }else{
+
+            stockBox.innerHTML =
+                "Stock ปัจจุบัน: -";
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        stockBox.innerHTML =
+            "ไม่สามารถตรวจสอบ Stock ได้";
+
+    });
+}
+
+/* =========================
+   Toast
+========================= */
+
+function showToast(text){
+
+    const toast = document.getElementById("toast");
+
+    toast.innerHTML = text;
+
+    toast.style.display = "block";
+
+    setTimeout(function(){
+
+        toast.style.display = "none";
+
+    },1200);
+
+}
+
+
+/* =========================
+   ล้างฟอร์ม
+========================= */
+
+function clearForm(){
+
+    document.getElementById("category").value = "";
+
+    document.getElementById("size").value = "";
+
+    document.getElementById("currentStock").innerHTML =
+        "Stock ปัจจุบัน: -";
+
+    document.getElementById("quantity").value = 1;
+
+    document.querySelectorAll(".product-btn").forEach(
+
+        b => b.classList.remove("active")
+
+    );
+
+    document.querySelectorAll(".size-btn").forEach(
+
+        b => b.classList.remove("active")
+
+    );
+
+    document.getElementById("quantity").focus();
+
+}
+
+
+/* =========================
+   บันทึกรับสินค้า
+========================= */
+
+function saveReceive(){
+
+    const category =
+        document.getElementById("category").value;
+
+    const size =
+        document.getElementById("size").value;
+
+    const quantity =
+        document.getElementById("quantity").value;
+
+
+    if(category === "" || size === ""){
+
+        showToast("เลือกสินค้าและไซส์ก่อน");
+
+        return;
+    }
+
+
+    fetch("/api/receive",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        },
+
+        body:
+            "category="
+            + encodeURIComponent(category)
+            + "&size="
+            + encodeURIComponent(size)
+            + "&quantity="
+            + encodeURIComponent(quantity)
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        showToast(data.message);
+
+
+        if(data.success){
+
+            // ==============================
+            // อัปเดต Stock ทันที
+            // ==============================
+
+            loadCurrentStock();
+
+
+            // ==============================
+            // โหลดรายการรับเข้าล่าสุด
+            // ==============================
+
+            loadRecentReceive();
+
+
+            // ==============================
+            // ล้างจำนวน
+            // ==============================
+
+            document.getElementById(
+                "quantity"
+            ).value = 1;
+
+            document.getElementById(
+                "quantity"
+            ).focus();
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        showToast(
+            "เกิดข้อผิดพลาดในการรับสินค้า"
+        );
+
+    });
+
+}
+
+
+/* =========================
+   โหลดรายการรับเข้าล่าสุด
+========================= */
+
+function loadRecentReceive(){
+
+    fetch("/api/recent-receive")
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        let html = "";
+
+        if(!data.items || data.items.length === 0){
+
+            html = "ยังไม่มีรายการรับเข้า";
+
+        }
+        else{
+
+            data.items.forEach(item => {
+
+                html +=
+                    "<div class='receive-item'>" +
+
+                    "📦 " +
+
+                    item[1] +
+
+                    " " +
+
+                    item[2] +
+
+                    " +" +
+
+                    item[3] +
+
+                    "</div>";
+
+            });
+
+        }
+
+
+        document.getElementById(
+            "recentReceive"
+        ).innerHTML = html;
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+    });
+
+}
+
+
+/* =========================
+   เริ่มต้นหน้า
+========================= */
+
+window.onload = function(){
+
+    document
+        .getElementById("quantity")
+        .focus();
+
+    loadRecentReceive();
+
+    setInterval(
+        loadRecentReceive,
+        2000
+    );
+
+};
+
+
+/* =========================
+   Enter = รับสินค้า
+========================= */
+
+document.addEventListener(
+
+    "keydown",
+
+    function(e){
+
+        if(e.key === "Enter"){
+
+            e.preventDefault();
+
+            saveReceive();
+
+        }
+
+    }
+
+);
+
+</script>
+
+
+<div class="receive-page">
+
+
+    <!-- =====================
+         TITLE
+    ====================== -->
+
+    <div class="receive-title">
+
+        📦 รับสินค้าเข้า
+
+    </div>
+
+
+    <!-- =====================
+         PRODUCT
+    ====================== -->
+
+    <div class="receive-card">
+
+        <div class="receive-card-title">
+
+            👕 สินค้า
+
+        </div>
+
+
+        {{ product_buttons|safe }}
+
+
+        <input
+            id="category"
+            class="receive-selected"
+            readonly
+            placeholder="ยังไม่ได้เลือกสินค้า"
+        >
+
+    </div>
+
+
+    <!-- =====================
+         SIZE
+    ====================== -->
+
+    <div class="receive-card">
+
+        <div class="receive-card-title">
+
+            📏 ไซส์
+
+        </div>
+
+
+        {{ size_buttons|safe }}
+
+
+        <input
+            id="size"
+            class="receive-selected"
+            readonly
+            placeholder="ยังไม่ได้เลือกไซส์"
+        >
+        <div id="currentStock" style="
+            margin-top:15px;
+            padding:14px;
+            background:#f7f7f7;
+            border-radius:12px;
+            text-align:center;
+            font-size:20px;
+            font-weight:bold;
+            color:#555;
+        ">
+            Stock ปัจจุบัน: -
+        </div>
+
+    </div>
+
+
+    <!-- =====================
+         QUANTITY
+    ====================== -->
+
+    <div class="receive-card">
+
+        <div class="receive-card-title">
+
+            🔢 จำนวน
+
+        </div>
+
+
+        <input
+
+            id="quantity"
+
+            type="number"
+
+            value="1"
+
+            min="1"
+
+        >
+
+    </div>
+
+
+    <!-- =====================
+         SAVE
+    ====================== -->
+
+    <button
+
+        class="receive-save"
+
+        type="button"
+
+        onclick="saveReceive()"
+
+    >
+
+        📦 รับสินค้าเข้าสต๊อก
+
+    </button>
+
+
+    <!-- =====================
+         RECENT
+    ====================== -->
+
+    <div class="receive-recent">
+
+        <div class="receive-recent-title">
+
+            🧾 รับเข้าล่าสุด
+
+        </div>
+
+
+        <div id="recentReceive">
+
+            กำลังโหลด...
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<div id="toast"></div>
+
+
+{% endblock %}

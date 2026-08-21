@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html lang="th">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Report</title>
+
+<style>
+
+body{
+
+font-family:Arial;
+
+background:#f4f4f4;
+
+padding:20px;
+
+}
+
+
+.box{
+
+background:white;
+
+border-radius:20px;
+
+padding:20px;
+
+margin-bottom:20px;
+
+text-align:center;
+
+}
+
+
+.item{
+
+background:white;
+
+padding:15px;
+
+margin:10px 0;
+
+border-radius:15px;
+
+font-size:20px;
+
+}
+
+
+/* =====================================
+   ชื่องาน
+===================================== */
+
+.event-box{
+
+background:white;
+
+border-radius:20px;
+
+padding:16px;
+
+margin-bottom:20px;
+
+}
+
+
+.event-title{
+
+font-size:16px;
+
+font-weight:bold;
+
+margin-bottom:8px;
+
+}
+
+
+.event-select{
+
+width:100%;
+
+padding:12px;
+
+border-radius:12px;
+
+border:1px solid #ddd;
+
+font-size:16px;
+
+background:#fff;
+
+box-sizing:border-box;
+
+}
+
+
+/* =====================================
+   ปุ่ม Export
+===================================== */
+
+.export-box{
+
+background:white;
+
+border-radius:20px;
+
+padding:16px;
+
+margin-bottom:20px;
+
+}
+
+
+.export-title{
+
+font-size:16px;
+
+font-weight:bold;
+
+margin-bottom:12px;
+
+}
+
+
+.export-btn{
+
+display:block;
+
+width:100%;
+
+padding:14px;
+
+border:none;
+
+border-radius:14px;
+
+font-size:17px;
+
+font-weight:bold;
+
+cursor:pointer;
+
+margin-top:10px;
+
+}
+
+
+.pdf-btn{
+
+background:#fee2e2;
+
+color:#991b1b;
+
+}
+
+
+.pdf-btn:active{
+
+transform:scale(.98);
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h2>
+📊 MAXKY POS REPORT
+</h2>
+
+
+<!-- =====================================
+     เลือกชื่องาน
+===================================== -->
+
+<div class="event-box">
+
+<div class="event-title">
+🎪 ชื่องาน
+</div>
+
+
+<select
+    class="event-select"
+    id="eventName"
+    onchange="changeEvent(this.value)"
+>
+
+    <option
+        value=""
+        {% if not selected_event %}
+        selected
+        {% endif %}
+    >
+        ทุกงาน
+    </option>
+
+
+    {% for event_name in event_names %}
+
+    <option
+        value="{{ event_name }}"
+        {% if selected_event == event_name %}
+        selected
+        {% endif %}
+    >
+
+        {{ event_name }}
+
+    </option>
+
+    {% endfor %}
+
+</select>
+
+</div>
+
+
+<!-- =====================================
+     จำนวนขาย
+===================================== -->
+
+<div class="box">
+
+    วันนี้ขายแล้ว
+
+    <h1>
+
+        {{ total }}
+
+        ตัว
+
+    </h1>
+
+</div>
+
+
+<!-- =====================================
+     รายได้
+===================================== -->
+
+<div class="box">
+
+    💰 รายได้
+
+    <h1>
+
+        {{ "{:,.0f}".format(revenue or 0) }}
+
+        บาท
+
+    </h1>
+
+</div>
+
+
+<!-- =====================================
+     Export PDF
+===================================== -->
+
+<div class="export-box">
+
+    <div class="export-title">
+
+        📤 Export รายงาน
+
+    </div>
+
+
+    <button
+        class="export-btn pdf-btn"
+        onclick="exportPDF()"
+    >
+
+        📄 Export PDF
+
+    </button>
+
+    <button
+        class="export-btn"
+        onclick="exportExcel()"
+    >
+        📊 Export Excel
+    </button>
+    
+</div>
+
+
+<!-- =====================================
+     รายการสินค้า
+===================================== -->
+
+{% for item in items %}
+
+<div class="item">
+
+    {{ item[0] }}
+
+    <br>
+
+    ขาย
+
+    {{ item[1] }}
+
+    ตัว
+
+</div>
+
+{% endfor %}
+
+
+<script>
+
+
+/* =====================================
+   เปลี่ยนงาน
+===================================== */
+
+function changeEvent(eventName) {
+
+
+    if (!eventName) {
+
+        window.location.href =
+            "/report";
+
+        return;
+
+    }
+
+
+    window.location.href =
+        "/report?event_name=" +
+        encodeURIComponent(eventName);
+
+}
+
+
+
+/* =====================================
+   Export PDF
+===================================== */
+
+function exportPDF() {
+
+
+    const eventName =
+        document.getElementById(
+            "eventName"
+        ).value;
+
+
+    /* -----------------------------
+       ทุกงาน
+    ----------------------------- */
+
+    if (!eventName) {
+
+        window.location.href =
+            "/export/pdf";
+
+        return;
+
+    }
+
+
+    /* -----------------------------
+       งานที่เลือก
+    ----------------------------- */
+
+    window.location.href =
+        "/export/pdf?event_name=" +
+        encodeURIComponent(eventName);
+
+}
+
+function exportExcel() {
+
+    const eventName =
+        document.getElementById(
+            "eventName"
+        ).value;
+
+
+    /* -----------------------------
+       ทุกงาน
+    ----------------------------- */
+
+    if (!eventName) {
+
+        window.location.href =
+            "/export/excel";
+
+        return;
+
+    }
+
+
+    /* -----------------------------
+       งานที่เลือก
+    ----------------------------- */
+
+    window.location.href =
+        "/export/excel?event_name=" +
+        encodeURIComponent(eventName);
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

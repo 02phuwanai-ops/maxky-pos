@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>{{ title if title else "MAXKY POS" }}</title>
+
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#111111">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+}
+
+/* =========================================
+   MAXKY POS Header
+========================================= */
+
+.header{
+    background:#111;
+    color:white;
+    padding:16px 20px;
+}
+
+/* กล่องด้านใน */
+.header-inner{
+    max-width:1180px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+}
+
+/* ชื่อระบบ */
+.header-brand{
+    font-size:28px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+/* รายได้ด้านขวา & แถบสถานะ */
+.header-revenue{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    white-space:nowrap;
+}
+
+.network-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+.status-online {
+    background: #22c55e;
+    color: white;
+}
+
+.status-offline {
+    background: #ef4444;
+    color: white;
+}
+
+/* ข้อความรายได้วันนี้ */
+.header-revenue-label{
+    font-size:13px;
+    color:#a1a1aa;
+}
+
+/* ตัวเลข */
+.header-revenue-value{
+    font-size:22px;
+    font-weight:bold;
+    color:#86efac;
+}
+
+/* หน่วยบาท */
+.header-revenue-unit{
+    font-size:13px;
+    color:#d1d5db;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 3px 12px rgba(0,0,0,.15);
+}
+
+/* =========================================
+   Mobile Optimization
+========================================= */
+
+@media(max-width:700px){
+
+    .header{
+        padding:12px 14px;
+    }
+
+    .header-inner{
+        gap:10px;
+    }
+
+    .header-brand{
+        font-size:20px;
+    }
+
+    .header-revenue{
+        gap:5px;
+    }
+
+    .header-revenue-label{
+        display:none;
+    }
+
+    .header-revenue-value{
+        font-size:18px;
+    }
+
+    .header-revenue-unit{
+        font-size:12px;
+    }
+
+    .container{
+        padding:14px;
+    }
+}
+
+</style>
+
+<!-- ⚡ Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('✅ PWA Service Worker Ready'))
+        .catch(err => console.error('❌ Service Worker Error:', err));
+    });
+  }
+</script>
+
+<script>
+// 5. เช็กการเชื่อมต่อเน็ตแบบชัวร์ 100% (แก้ปัญหา Method HEAD โดน Block)
+async function checkRealOnlineStatus() {
+    // ถ้าเบราว์เซอร์บอกว่าไม่มีเน็ต -> Offline แน่นอน 100%
+    if (!navigator.onLine) return false;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500); // รอไม่เกิน 2.5 วินาที
+        
+        // ใช้ GET ยิงไปหา API ดึงข้อมูลสั้นๆ ที่มีอยู่แล้ว
+        const response = await fetch('/api/recent-sales?check=' + Date.now(), { 
+            method: 'GET',
+            cache: 'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (e) {
+        // ถ้ายิงแล้ว Error หรือ Timeout แสดงว่าไม่มีเน็ตจริง
+        return false;
+    }
+}
+
+// 6. ตรวจจับสถานะการเชื่อมต่อเน็ต
+async function updateNetworkStatus() {
+    const statusBadge = document.getElementById('networkStatus');
+    if (!statusBadge) return;
+
+    // ถ้าเบราว์เซอร์ตัดเน็ต ให้เปลี่ยนเป็น Offline ทันที ไม่ต้องรอ Ping
+    if (!navigator.onLine) {
+        statusBadge.className = 'network-badge status-offline';
+        statusBadge.innerText = '🔴 Offline';
+        return;
+    }
+
+    // ถ้าเบราว์เซอร์บอกว่ามีเน็ต ค่อยลอง Ping เช็กอีกที
+    const isOnline = await checkRealOnlineStatus();
+
+    if (isOnline) {
+        statusBadge.className = 'network-badge status-online';
+        statusBadge.innerText = '🟢 Online';
+        syncOfflineData();
+    } else {
+        statusBadge.className = 'network-badge status-offline';
+        statusBadge.innerText = '🔴 Offline';
+    }
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="header">
+    <div class="header-inner">
+
+        <!-- MAXKY POS -->
+        <div class="header-brand">
+            👕 MAXKY POS
+        </div>
+
+        <!-- รายได้วันนี้ & แสดงสถานะ Online/Offline -->
+        <div class="header-revenue">
+            <span id="networkStatus" class="network-badge status-online">🟢 Online</span>
+
+            <span class="header-revenue-label">
+                💰 รายได้วันนี้
+            </span>
+
+            <strong
+                id="headerRevenue"
+                class="header-revenue-value"
+            >
+                0
+            </strong>
+
+            <span class="header-revenue-unit">
+                บาท
+            </span>
+        </div>
+
+    </div>
+</div>
+
+<div class="container">
+{% block content %}
+{% endblock %}
+</div>
+
+</body>
+</html>
