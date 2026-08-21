@@ -72,9 +72,8 @@ def stock_group():
         "groups": groups
     })
 
-
 # ==========================================
-# 🛑 ROUTE ล้างข้อมูลยอดขายและสต๊อกเป็น 0
+# 🛑 ROUTE ล้างข้อมูลยอดขาย (การันตีสต๊อกไม่หาย 100%)
 # ==========================================
 @router.get("/api/clear-all-data")
 @router.post("/api/clear-all-data")
@@ -83,27 +82,23 @@ def clear_all_data():
         conn = sqlite3.connect("data/maxky_pos.db")
         cursor = conn.cursor()
 
-        # 1. ลบรายการขายทั้งหมด
+        # 1. ลบเฉพาะตารางประวัติการขายเท่านั้น
         cursor.execute("DELETE FROM sales;")
         
-        # 2. ลบกะการขาย
+        # 2. ลบประวัติกะการขาย (ถ้ามี)
         try:
             cursor.execute("DELETE FROM shifts;")
         except Exception:
             pass
 
-        # 3. ปรับสต๊อกสินค้าทุกชิ้นให้เหลือ 0
-        try:
-            cursor.execute("UPDATE stock SET quantity = 0;")
-        except Exception:
-            pass
+        # ❌ ลบคำสั่งเกี่ยวกับ stock ออกทั้งหมด เพื่อไม่ให้ไปยุ่งกับตาราง stock
 
         conn.commit()
         conn.close()
 
         return JSONResponse({
             "status": "success",
-            "message": "ล้างข้อมูลยอดขายและปรับสต๊อกเป็น 0 เรียบร้อยแล้ว!"
+            "message": "รีเซ็ตยอดขายเรียบร้อยแล้ว (สต๊อกสินค้าคงเดิม 100%)"
         })
     except Exception as e:
         return JSONResponse({

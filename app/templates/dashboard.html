@@ -300,7 +300,38 @@ window.onload=function(){
     </div>
 
 </div>
+<!-- ========================================== -->
+<!-- ปุ่มรีเซ็ตระบบเมื่อจบงานอีเวนต์ -->
+<!-- ========================================== -->
+<div style="margin: 20px 0; text-align: right;">
+    <button onclick="confirmResetData()" style="background-color: #ef4444; color: white; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;">
+        🔄 รีเซ็ตยอดขาย (จบงานอีเวนต์)
+    </button>
+</div>
 
+<script>
+async function confirmResetData() {
+    const confirmAction = confirm("⚠️ คุณต้องการรีเซ็ตยอดขายและรายการขายล่าสุดเป็น 0 ใช่หรือไม่?\n(สินค้าคงเหลือในสต๊อกจะไม่ถูกลบ)");
+    if (!confirmAction) return;
+
+    try {
+        const response = await fetch('/api/clear-all-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+            alert("✅ " + result.message);
+            window.location.reload(); // รีเฟรชหน้าเพื่ออัปเดตยอดเป็น 0 ทันที
+        } else {
+            alert("❌ เกิดข้อผิดพลาด: " + result.message);
+        }
+    } catch (error) {
+        alert("❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    }
+}
+</script>
 
 <!-- =====================================
      เมนูด่วน
