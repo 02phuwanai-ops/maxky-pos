@@ -2,36 +2,133 @@
 
 {% block content %}
 
-<h1>👕 MAXKY POS</h1>
+<style>
+/* จัดโครงสร้างหน้าสไตล์ Minimal */
+.home-container {
+    max-width: 950px;
+    margin: 50px auto;
+    text-align: center;
+    padding: 0 20px;
+}
 
-<p>Fashion Store Management</p>
+.home-title {
+    font-size: 38px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+}
 
-<div class="menu-grid">
+.home-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 45px;
+    font-weight: 400;
+}
 
-    <a class="card" href="/sale">
+/* ตารางเมนู 3 ปุ่ม */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin: 0 auto;
+}
 
-        🛒
+/* การ์ดสไตล์ Minimal White Card */
+.card {
+    text-decoration: none;
+    background: #ffffff;
+    border: 2px solid #f3f4f6;
+    border-radius: 20px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
 
-        <h2>ขายสินค้า</h2>
+.card-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    transition: transform 0.25s ease;
+}
 
-    </a>
+.card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: #374151;
+}
 
-    <a class="card" href="/receive">
+/* Hover Effect สบายตา แยกตามสี Accent อ่อนๆ */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+}
 
-        📦
+.card:hover .card-icon {
+    transform: scale(1.1);
+}
 
-        <h2>รับสินค้า</h2>
+/* 1. ปุ่มขายสินค้า (Emerald Pastel) */
+a.card[href="/sale"]:hover {
+    border-color: #a7f3d0;
+    background: #f0fdf4;
+}
+a.card[href="/sale"]:hover h2 {
+    color: #059669;
+}
 
-    </a>
+/* 2. ปุ่มรายรับ-รายจ่าย (Soft Purple Pastel) */
+a.card[href="/account"]:hover {
+    border-color: #ddd6fe;
+    background: #f5f3ff;
+}
+a.card[href="/account"]:hover h2 {
+    color: #7c3aed;
+}
 
-    <a class="card" href="/owner-login">
+/* 3. ปุ่ม OWNER (Warm Amber Pastel) */
+a.card[href="/owner-login"]:hover {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+a.card[href="/owner-login"]:hover h2 {
+    color: #d97706;
+}
 
-        👑
+@media (max-width: 768px) {
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 
-        <h2>OWNER</h2>
+<div class="home-container">
+    <h1 class="home-title">👕 MAXKY POS</h1>
+    <p class="home-subtitle">Fashion Store Management</p>
 
-    </a>
+    <div class="menu-grid">
+        <!-- 1. ขายสินค้า -->
+        <a class="card" href="/sale">
+            <div class="card-icon">🛒</div>
+            <h2>ขายสินค้า</h2>
+        </a>
 
+        <!-- 2. รายรับ - รายจ่าย -->
+        <a class="card" href="/account">
+            <div class="card-icon">💰</div>
+            <h2>รายรับ - รายจ่าย</h2>
+        </a>
+
+        <!-- 3. OWNER -->
+        <a class="card" href="/owner-login">
+            <div class="card-icon">👑</div>
+            <h2>OWNER</h2>
+        </a>
+    </div>
 </div>
 
 {% endblock %}
