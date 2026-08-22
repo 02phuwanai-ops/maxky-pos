@@ -3,129 +3,189 @@
 {% block content %}
 
 <style>
-/* จัดโครงสร้างหน้าสไตล์ Minimal */
+/* จัดโครงสร้างหน้าสไตล์ Minimal Soft Pastel */
 .home-container {
-    max-width: 950px;
-    margin: 50px auto;
+    max-width: 960px;
+    margin: 20px auto 40px; /* ลด margin-top ให้ชิดด้านบนมากขึ้น */
     text-align: center;
     padding: 0 20px;
 }
 
 .home-title {
-    font-size: 38px;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 6px;
+    font-size: 36px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 6px 0;
     letter-spacing: -0.5px;
 }
 
 .home-subtitle {
-    font-size: 16px;
-    color: #6b7280;
-    margin-bottom: 45px;
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 30px; /* ลดระยะห่างระหว่างข้อความกับปุ่ม */
     font-weight: 400;
 }
 
-/* ตารางเมนู 3 ปุ่ม */
+/* Grid สำหรับการ์ดเมนู */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    gap: 22px;
     margin: 0 auto;
 }
 
-/* การ์ดสไตล์ Minimal White Card */
+/* การ์ดสไตล์ Minimal Soft White Card */
 .card {
     text-decoration: none;
     background: #ffffff;
-    border: 2px solid #f3f4f6;
-    border-radius: 20px;
-    padding: 40px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 36px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+/* พื้นหลังไอคอนทรงกลมสีอ่อนๆ (Soft Icon Circle) */
+.icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
 .card-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    transition: transform 0.25s ease;
+    font-size: 38px;
+    line-height: 1;
 }
 
 .card h2 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     margin: 0;
-    color: #374151;
+    color: #334155;
+    transition: color 0.3s ease;
 }
 
-/* Hover Effect สบายตา แยกตามสี Accent อ่อนๆ */
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+/* 1. ปุ่มขายสินค้า (Soft Emerald Pastel) */
+a.card[href="/sale"] .icon-wrapper {
+    background: #e6f4ea;
 }
-
-.card:hover .card-icon {
-    transform: scale(1.1);
-}
-
-/* 1. ปุ่มขายสินค้า (Emerald Pastel) */
 a.card[href="/sale"]:hover {
     border-color: #a7f3d0;
     background: #f0fdf4;
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.12);
+}
+a.card[href="/sale"]:hover .icon-wrapper {
+    background: #d1fae5;
+    transform: scale(1.08);
 }
 a.card[href="/sale"]:hover h2 {
     color: #059669;
 }
 
-/* 2. ปุ่มรายรับ-รายจ่าย (Soft Purple Pastel) */
+/* 2. ปุ่มรายรับ-รายจ่าย (Soft Amber Pastel) */
+a.card[href="/account"] .icon-wrapper {
+    background: #fef3c7;
+}
 a.card[href="/account"]:hover {
-    border-color: #ddd6fe;
-    background: #f5f3ff;
-}
-a.card[href="/account"]:hover h2 {
-    color: #7c3aed;
-}
-
-/* 3. ปุ่ม OWNER (Warm Amber Pastel) */
-a.card[href="/owner-login"]:hover {
     border-color: #fde68a;
     background: #fffbeb;
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px -4px rgba(245, 158, 11, 0.12);
 }
-a.card[href="/owner-login"]:hover h2 {
+a.card[href="/account"]:hover .icon-wrapper {
+    background: #fef08a;
+    transform: scale(1.08);
+}
+a.card[href="/account"]:hover h2 {
     color: #d97706;
 }
 
+/* 3. ปุ่ม OWNER (Soft Purple/Pink Pastel) */
+a.card[href="/owner-login"] .icon-wrapper {
+    background: #fce7f3;
+}
+a.card[href="/owner-login"]:hover {
+    border-color: #fbcfe8;
+    background: #fdf2f8;
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px -4px rgba(236, 72, 153, 0.12);
+}
+a.card[href="/owner-login"]:hover .icon-wrapper {
+    background: #fbcfe8;
+    transform: scale(1.08);
+}
+a.card[href="/owner-login"]:hover h2 {
+    color: #db2777;
+}
+
+/* Responsive สำหรับมือถือ */
 @media (max-width: 768px) {
+    .home-container {
+        margin: 15px auto 30px;
+    }
     .menu-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .card {
+        padding: 24px 20px;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 20px;
+        border-radius: 18px;
+    }
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 0;
+    }
+    .card-icon {
+        font-size: 30px;
+    }
+    .card h2 {
+        font-size: 18px;
     }
 }
 </style>
 
 <div class="home-container">
-    <h1 class="home-title">👕 MAXKY POS</h1>
+    <h1 class="home-title">MAXKY POS</h1>
     <p class="home-subtitle">Fashion Store Management</p>
 
     <div class="menu-grid">
         <!-- 1. ขายสินค้า -->
         <a class="card" href="/sale">
-            <div class="card-icon">🛒</div>
+            <div class="icon-wrapper">
+                <span class="card-icon">🛒</span>
+            </div>
             <h2>ขายสินค้า</h2>
         </a>
 
         <!-- 2. รายรับ - รายจ่าย -->
         <a class="card" href="/account">
-            <div class="card-icon">💰</div>
+            <div class="icon-wrapper">
+                <span class="card-icon">💰</span>
+            </div>
             <h2>รายรับ - รายจ่าย</h2>
         </a>
 
         <!-- 3. OWNER -->
         <a class="card" href="/owner-login">
-            <div class="card-icon">👑</div>
+            <div class="icon-wrapper">
+                <span class="card-icon">👑</span>
+            </div>
             <h2>OWNER</h2>
         </a>
     </div>

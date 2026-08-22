@@ -25,10 +25,40 @@ def account_page(
     scope: str = Query("all"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    selected_month: Optional[str] = Query(None),
 ):
-    summary = get_account_summary(
-        selected_scope=scope, start_date=start_date, end_date=end_date
+    current_time = datetime.now()
+    
+    # กำหนดค่าเดือนเริ่มต้น (ฟอร์แมต YYYY-MM เช่น "2026-08")
+    if not selected_month:
+        selected_month = current_time.strftime("%Y-%m")
+
+    # หากเลือกหมวดชีวิตประจำวัน (personal) และไม่ได้กรองวันที่แบบกำหนดเอง
+    # จะตัดยอดรายวันให้อัตโนมัติ (เฉพาะวันนี้)
+    if scope == "personal" and not start_date and not end_date:
+        today_str = current_time.strftime("%Y-%m-%d")
+        summary = get_account_summary(
+            selected_scope="personal", start_date=today_str, end_date=today_str
+        )
+    else:
+        summary = get_account_summary(
+            selected_scope=scope, start_date=start_date, end_date=end_date
+        )
+
+    # ดึงข้อมูลสรุปยอดรวมทั้งเดือนสำหรับหมวด Personal
+    month_start = f"{selected_month}-01"
+    # หาวันที่สุดท้ายของเดือน
+    if selected_month.split("-")[1] in ["01", "03", "05", "07", "08", "10", "12"]:
+        month_end = f"{selected_month}-31"
+    elif selected_month.split("-")[1] in ["04", "06", "09", "11"]:
+        month_end = f"{selected_month}-30"
+    else:
+        month_end = f"{selected_month}-29"
+
+    monthly_summary = get_account_summary(
+        selected_scope="personal", start_date=month_start, end_date=month_end
     )
+
     work_current_income = get_work_income_summary()
 
     return templates.TemplateResponse(
@@ -37,6 +67,8 @@ def account_page(
         context={
             "request": request,
             "summary": summary,
+            "monthly_summary": monthly_summary,
+            "selected_month": selected_month,
             "work_current_income": work_current_income,
             "start_date": start_date or "",
             "end_date": end_date or "",

@@ -3,344 +3,326 @@
 {% block content %}
 
 <style>
-
-h1{
-    text-align:center;
-    margin-bottom:30px;
+/* จัดโครงสร้างสไตล์ Minimal Soft Pastel */
+.stock-container {
+    max-width: 900px;
+    margin: 20px auto 40px;
+    padding: 0 20px;
 }
 
-.search{
-    width:100%;
-    padding:15px;
-    font-size:22px;
-    border:1px solid #ddd;
-    border-radius:15px;
-    margin-bottom:30px;
-    box-sizing:border-box;
+.stock-title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    letter-spacing: -0.5px;
 }
 
-.stock-card{
-    background:white;
-    border-radius:20px;
-    padding:25px;
-    margin-bottom:25px;
-    box-shadow:0 3px 12px rgba(0,0,0,.12);
+/* ช่องค้นหาสไตล์คลีน */
+.search-wrapper {
+    position: relative;
+    margin-bottom: 25px;
 }
 
-.product-name{
-    font-size:28px;
-    font-weight:bold;
-    margin-bottom:10px;
+.search {
+    width: 100%;
+    padding: 14px 20px 14px 48px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    outline: none;
+    transition: all 0.25s ease;
 }
 
-.total{
-    font-size:20px;
-    margin-bottom:20px;
+.search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
 }
 
-.size-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:15px;
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #94a3b8;
+    pointer-events: none;
 }
 
-.size-card{
-    border-radius:15px;
-    padding:18px;
-    text-align:center;
-    font-size:20px;
-    font-weight:bold;
+/* การ์ดรายการสินค้า */
+.stock-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.good{
-    background:#d9f7d9;
-    color:#087f23;
+.stock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #f1f5f9;
 }
 
-.warning{
-    background:#fff3cd;
-    color:#856404;
+.product-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.empty{
-    background:#ffd6d6;
-    color:#b00020;
+.total-badge {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #475569;
 }
 
-.qty{
-    font-size:32px;
-    margin-top:8px;
+.total-badge.empty {
+    background: #ffe4e6;
+    color: #e11d48;
 }
 
+/* Grid ของไซส์ */
+.size-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.size-card {
+    border-radius: 16px;
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+}
+
+.size-card .qty {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+/* โทนสีพาสเทลตามสถานะสต็อก */
+.good {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.empty {
+    background: #f8fafc;
+    color: #cbd5e1;
+    border-color: #f1f5f9;
+}
+
+.empty .qty {
+    font-size: 14px;
+    color: #f43f5e;
+    margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+    .stock-container {
+        margin: 10px auto 30px;
+    }
+    .stock-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .size-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 </style>
 
 <script>
+/* ฟังก์ชันจัดเรียงลำดับไซส์มาตรฐาน */
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'FREE', 'FREESIZE'];
 
-function searchStock(){
-
-    let keyword=document
-        .getElementById("search")
-        .value
-        .toLowerCase();
-
-    let cards=document.querySelectorAll(".stock-card");
-
-    cards.forEach(function(card){
-
-        if(card.innerText.toLowerCase().includes(keyword)){
-            card.style.display="block";
-        }else{
-            card.style.display="none";
-        }
-
-    });
-
+function getSizeRank(sizeStr) {
+    const cleanSize = sizeStr.toString().trim().toUpperCase();
+    const index = SIZE_ORDER.indexOf(cleanSize);
+    return index !== -1 ? index : 99;
 }
 
+function sortGridSizes(grid) {
+    const cards = Array.from(grid.querySelectorAll('.size-card'));
+    cards.sort((a, b) => {
+        const sizeA = a.getAttribute('data-size') || '';
+        const sizeB = b.getAttribute('data-size') || '';
+        return getSizeRank(sizeA) - getSizeRank(sizeB);
+    });
+    cards.forEach(card => grid.appendChild(card));
+}
+
+function initSortSizes() {
+    document.querySelectorAll('.size-grid').forEach(grid => {
+        sortGridSizes(grid);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    initSortSizes();
+});
+
+function searchStock(){
+    let keyword = document.getElementById("search").value.toLowerCase();
+    let cards = document.querySelectorAll(".stock-card");
+
+    cards.forEach(function(card){
+        if(card.innerText.toLowerCase().includes(keyword)){
+            card.style.display = "block";
+        }else{
+            card.style.display = "none";
+        }
+    });
+}
 
 /* ==========================================
-   Build 0.86
-   Live Stock
+   Live Stock Auto Refresh
    ========================================== */
-
 function refreshStock(){
-
     fetch("/api/stock")
-
         .then(response => response.json())
-
         .then(data => {
-
             if(!data.success){
                 return;
             }
 
-            const products=data.products;
+            const products = data.products;
 
             Object.keys(products).forEach(function(category){
+                const productData = products[category];
+                const card = document.querySelector('[data-category="' + CSS.escape(category) + '"]');
 
-                const productData=products[category];
+                if(!card) return;
 
-                const card=document.querySelector(
-                    '[data-category="' +
-                    CSS.escape(category) +
-                    '"]'
-                );
-
-                if(!card){
-                    return;
-                }
-
-
-                /* ------------------------------
-                   อัปเดตยอดรวม
-                   ------------------------------ */
-
-                const total=card.querySelector(".total");
-
+                /* อัปเดตยอดรวม */
+                const total = card.querySelector(".total-badge");
                 if(total){
-
                     if(productData.total === 0){
-
-                        total.innerHTML=
-                            "🔴 หมดสต๊อก";
-
+                        total.className = "total-badge empty";
+                        total.innerHTML = "🔴 หมดสต๊อก";
                     }else{
-
-                        total.innerHTML=
-                            "📦 รวม <b>" +
-                            productData.total +
-                            "</b> ตัว";
-
+                        total.className = "total-badge";
+                        total.innerHTML = "📦 รวม <b>" + productData.total + "</b> ตัว";
                     }
-
                 }
 
-
-                /* ------------------------------
-                   อัปเดตแต่ละไซส์
-                   ------------------------------ */
-
+                /* อัปเดตแต่ละไซส์ */
                 productData.items.forEach(function(item){
+                    const sizeCard = card.querySelector('[data-size="' + CSS.escape(item.size) + '"]');
+                    if(!sizeCard) return;
 
-                    const sizeCard=card.querySelector(
-                        '[data-size="' +
-                        CSS.escape(item.size) +
-                        '"]'
-                    );
-
-                    if(!sizeCard){
-                        return;
-                    }
-
-                    const qty=sizeCard.querySelector(".qty");
-
-                    if(!qty){
-                        return;
-                    }
-
+                    const qty = sizeCard.querySelector(".qty");
+                    if(!qty) return;
 
                     if(item.quantity === 0){
-
-                        sizeCard.className=
-                            "size-card empty";
-
-                        qty.innerHTML="หมด";
-
+                        sizeCard.className = "size-card empty";
+                        qty.innerHTML = "หมด";
+                    } else if(item.quantity <= 3){
+                        sizeCard.className = "size-card warning";
+                        qty.innerHTML = item.quantity;
+                    } else {
+                        sizeCard.className = "size-card good";
+                        qty.innerHTML = item.quantity;
                     }
-
-                    else if(item.quantity <= 3){
-
-                        sizeCard.className=
-                            "size-card warning";
-
-                        qty.innerHTML=
-                            item.quantity;
-
-                    }
-
-                    else{
-
-                        sizeCard.className=
-                            "size-card good";
-
-                        qty.innerHTML=
-                            item.quantity;
-
-                    }
-
                 });
 
+                /* จัดเรียงไซส์ใหม่ให้ชัวร์ */
+                const grid = card.querySelector('.size-grid');
+                if(grid) sortGridSizes(grid);
             });
-
         })
-
         .catch(function(error){
-
-            console.log(
-                "Stock refresh error:",
-                error
-            );
-
+            console.log("Stock refresh error:", error);
         });
-
 }
 
-
-/*
-   อัปเดตทุก 2 วินาที
-*/
-
-setInterval(
-    refreshStock,
-    2000
-);
-
+setInterval(refreshStock, 2000);
 </script>
 
-<h1>📦 Stock Detail</h1>
+<div class="stock-container">
+    <h1 class="stock-title">📦 รายละเอียดสต็อกสินค้า</h1>
 
-<input
-id="search"
-class="search"
-placeholder="ค้นหาสินค้า..."
-onkeyup="searchStock()"
-
->
-
-{% for product,data in products.items() %}
-
-<div
-    class="stock-card"
-    data-category="{{ product }}"
->
-
-<div class="product-name">
-    👕 {{ product }}
-</div>
-
-
-{% if data.total == 0 %}
-
-    <div
-        class="total"
-        style="color:#d9534f;font-weight:bold;"
-    >
-        🔴 หมดสต๊อก
+    <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+            id="search"
+            class="search"
+            placeholder="พิมพ์ค้นหาสินค้า หรือไซส์..."
+            onkeyup="searchStock()"
+        >
     </div>
 
-{% else %}
+    {% for product, data in products.items() %}
+    <div class="stock-card" data-category="{{ product }}">
+        
+        <div class="stock-header">
+            <div class="product-name">
+                👕 {{ product }}
+            </div>
 
-    <div class="total">
-        📦 รวม <b>{{ data.total }}</b> ตัว
+            {% if data.total == 0 %}
+                <div class="total-badge empty">
+                    🔴 หมดสต๊อก
+                </div>
+            {% else %}
+                <div class="total-badge">
+                    📦 รวม <b>{{ data.total }}</b> ตัว
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="size-grid">
+            {% for item in data["items"] %}
+                {% if item.quantity == 0 %}
+                    <div class="size-card empty" data-size="{{ item.size }}">
+                        {{ item.size }}
+                        <div class="qty">หมด</div>
+                    </div>
+                {% elif item.quantity <= 3 %}
+                    <div class="size-card warning" data-size="{{ item.size }}">
+                        {{ item.size }}
+                        <div class="qty">{{ item.quantity }}</div>
+                    </div>
+                {% else %}
+                    <div class="size-card good" data-size="{{ item.size }}">
+                        {{ item.size }}
+                        <div class="qty">{{ item.quantity }}</div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
     </div>
-
-{% endif %}
-
-
-<div class="size-grid">
-
-
-{% for item in data["items"] %}
-
-
-    {% if item.quantity == 0 %}
-
-        <div
-            class="size-card empty"
-            data-size="{{ item.size }}"
-        >
-
-            {{ item.size }}
-
-            <div class="qty">
-                หมด
-            </div>
-
-        </div>
-
-
-    {% elif item.quantity <= 3 %}
-
-        <div
-            class="size-card warning"
-            data-size="{{ item.size }}"
-        >
-
-            {{ item.size }}
-
-            <div class="qty">
-                {{ item.quantity }}
-            </div>
-
-        </div>
-
-
-    {% else %}
-
-        <div
-            class="size-card good"
-            data-size="{{ item.size }}"
-        >
-
-            {{ item.size }}
-
-            <div class="qty">
-                {{ item.quantity }}
-            </div>
-
-        </div>
-
-    {% endif %}
-
-
-{% endfor %}
-
-
+    {% endfor %}
 </div>
-
-</div>
-
-{% endfor %}
 
 {% endblock %}

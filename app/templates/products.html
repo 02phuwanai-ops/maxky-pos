@@ -3,877 +3,436 @@
 {% block content %}
 
 <style>
-
-.form-title{
-    font-size:28px;
-    font-weight:bold;
-    margin:25px 0;
+/* โครงสร้างหลัก Minimal Modern */
+.manage-products-container {
+    max-width: 900px;
+    margin: 20px auto 50px;
+    padding: 0 16px;
+    font-family: system-ui, -apple-system, sans-serif;
 }
 
-.price-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:20px;
+.section-header {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.size-box{
-    background:white;
-    border-radius:18px;
-    padding:20px;
-    box-shadow:0 3px 12px rgba(0,0,0,.10);
+.form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.size-title{
-    font-size:28px;
-    font-weight:bold;
-    text-align:center;
-    margin-bottom:15px;
+/* Form Controls */
+.form-group {
+    margin-bottom: 20px;
 }
 
-.size-box label{
-    display:block;
-    margin-top:10px;
-    margin-bottom:5px;
-    color:#555;
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 8px;
 }
 
-.size-box input{
-    width:100%;
-    box-sizing:border-box;
-    padding:10px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    font-size:16px;
+.form-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 15px;
+    background: #f8fafc;
+    transition: all 0.2s;
 }
 
-.stock-input{
-    background:#f7f7f7;
+.form-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.save-btn{
-    width:100%;
-    margin-top:30px;
-    padding:16px;
-    border:none;
-    border-radius:15px;
-    background:#222;
-    color:white;
-    font-size:20px;
-    cursor:pointer;
+/* Grid จัดการไซส์ในการเพิ่มสินค้า */
+.price-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.save-btn:hover{
-    opacity:.9;
+.size-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px;
+    transition: transform 0.2s;
 }
 
-.product-card{
-    background:white;
-    border-radius:20px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 3px 12px rgba(0,0,0,.10);
+.size-box:hover {
+    transform: translateY(-2px);
 }
 
-.product-title{
-    font-size:24px;
-    font-weight:bold;
-    margin-bottom:15px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
+.size-title {
+    font-size: 20px;
+    font-weight: 800;
+    text-align: center;
+    color: #4338ca;
+    background: #e0e7ff;
+    padding: 6px;
+    border-radius: 10px;
+    margin-bottom: 12px;
 }
 
-.product-actions{
-    display:flex;
-    gap:8px;
+.size-box .form-label {
+    font-size: 13px;
+    margin-top: 10px;
+    margin-bottom: 4px;
 }
 
-.product-edit-btn,
-.product-delete-btn{
-    border:none;
-    border-radius:10px;
-    padding:8px 12px;
-    font-size:14px;
-    cursor:pointer;
+.size-box .form-input {
+    padding: 8px 12px;
+    font-size: 14px;
 }
 
-.product-edit-btn{
-    background:#e8f0ff;
-    color:#3157a6;
+.stock-input {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
 }
 
-.product-delete-btn{
-    background:#ffe8e8;
-    color:#c43d3d;
+/* ปุ่มกดบันทึกสินค้าหลัก */
+.save-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: #4f46e5;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
-.product-edit-btn:hover,
-.product-delete-btn:hover{
-    opacity:.8;
+.save-btn:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
 }
 
-.product-edit-form{
-    display:none;
-    margin-bottom:15px;
-    gap:8px;
-    align-items:center;
+/* การ์ดรายการสินค้า */
+.product-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 
-.product-edit-form input{
-    flex:1;
-    padding:10px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    font-size:16px;
+.product-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.product-save-name{
-    border:none;
-    border-radius:10px;
-    padding:10px 14px;
-    background:#222;
-    color:white;
-    cursor:pointer;
+.product-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1e293b;
 }
 
-.price-row{
-    display:grid;
-    grid-template-columns:70px 1fr 1fr auto;
-    gap:12px;
-    align-items:center;
-    padding:14px 0;
-    border-bottom:1px solid #eee;
+.product-actions {
+    display: flex;
+    gap: 8px;
 }
 
-.price-row:last-child{
-    border-bottom:none;
+.btn-soft-blue, .btn-soft-red {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.size-label{
-    font-size:20px;
-    font-weight:bold;
+.btn-soft-blue {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+.btn-soft-blue:hover { background: #c7d2fe; }
+
+.btn-soft-red {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.btn-soft-red:hover { background: #fca5a5; }
+
+/* ฟอร์มแก้ไขชื่อสินค้า */
+.product-edit-form {
+    display: none;
+    margin: 12px 0;
+    gap: 8px;
 }
 
-.price-value{
-    color:#555;
+.product-edit-form input {
+    flex: 1;
 }
 
-.price-value b{
-    color:#222;
+/* แถบไซส์และราคา */
+.price-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f8fafc;
 }
 
-.edit-form{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
+.price-row:last-child {
+    border-bottom: none;
 }
 
-.edit-form input{
-    width:90px;
-    box-sizing:border-box;
-    padding:8px;
-    border:1px solid #ddd;
-    border-radius:8px;
-    font-size:15px;
+.badge-size {
+    display: inline-block;
+    width: 50px;
+    text-align: center;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 800;
+    padding: 6px 0;
+    border-radius: 8px;
+    font-size: 15px;
 }
 
-.edit-btn{
-    padding:9px 12px;
-    border:none;
-    border-radius:9px;
-    background:#222;
-    color:white;
-    cursor:pointer;
+.price-info {
+    font-size: 14px;
+    color: #64748b;
 }
 
-.edit-btn:hover{
-    opacity:.9;
+.price-info b {
+    color: #0f172a;
+    font-size: 15px;
 }
 
-.delete-btn{
-    padding:9px 12px;
-    border:none;
-    border-radius:9px;
-    background:#eee;
-    color:#333;
-    cursor:pointer;
+.edit-form-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.delete-btn:hover{
-    background:#ddd;
+.edit-form-group input {
+    width: 85px;
+    padding: 7px 10px;
+    font-size: 14px;
 }
 
-.stock-display{
-    display:inline-block;
-    margin-top:6px;
-    padding:5px 10px;
-    background:#f5f5f5;
-    border-radius:8px;
-    font-size:14px;
-    color:#555;
+.btn-sm-dark {
+    padding: 7px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #334155;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-sm-dark:hover { background: #1e293b; }
+
+.btn-sm-icon {
+    padding: 7px 10px;
+    border: none;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+}
+.btn-sm-icon:hover {
+    background: #fee2e2;
+    color: #dc2626;
 }
 
-.empty{
-    text-align:center;
-    padding:20px;
-    color:#888;
+.empty-box {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px dashed #cbd5e1;
 }
 
-@media(max-width:700px){
-
-    .price-row{
-        grid-template-columns:60px 1fr;
+/* Responsive สำหรับมือถือ */
+@media (max-width: 640px) {
+    .price-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .price-info-container {
+        display: flex;
+        justify-content: space-between;
     }
 
-    .edit-form{
-        grid-column:1 / -1;
-        width:100%;
+    .edit-form-group {
+        width: 100%;
     }
 
-    .edit-form input{
-        flex:1;
-        min-width:90px;
+    .edit-form-group input {
+        flex: 1;
     }
-
 }
-
 </style>
 
-<!-- ==========================================
-     เพิ่มสินค้า
-========================================== -->
+<div class="manage-products-container">
 
-<div class="form-title">
-
-
-➕ เพิ่มสินค้า
-
-
-</div>
-
-<form
-    action="/products/add"
-    method="post"
->
-
-
-<label>
-    ชื่อสินค้า
-</label>
-
-<input
-    type="text"
-    name="category"
-    placeholder="เช่น เสื้อยืด"
-    required
->
-
-
-<div
-    class="form-title"
-    style="margin-top:30px;"
->
-
-    💰 ราคา + Stock แต่ละไซส์
-
-</div>
-
-
-<div class="price-grid">
-
-
-    <!-- ================= S ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            S
-        </div>
-
-        <label>
-            ต้นทุน
-        </label>
-
-        <input
-            type="number"
-            name="cost_s"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_s"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_s"
-            min="0"
-            step="1"
-            value="0"
-        >
-
+    <!-- Section 1: เพิ่มสินค้า -->
+    <div class="section-header">
+        ➕ เพิ่มสินค้าใหม่
     </div>
 
-
-    <!-- ================= M ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            M
+    <form action="/products/add" method="post" class="form-card">
+        <div class="form-group">
+            <label class="form-label">ชื่อสินค้า / หมวดหมู่</label>
+            <input type="text" name="category" class="form-input" placeholder="เช่น เสื้อยืดลายกราฟิก, กางเกงขาสั้น" required>
         </div>
 
-        <label>
-            ต้นทุน
-        </label>
-
-        <input
-            type="number"
-            name="cost_m"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_m"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_m"
-            min="0"
-            step="1"
-            value="0"
-        >
-
-    </div>
-
-
-    <!-- ================= L ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            L
+        <div class="form-label" style="font-size: 16px; margin: 20px 0 12px;">
+            💰 ตั้งค่าราคาและ สต๊อกตั้งต้น (รายไซส์)
         </div>
 
-        <label>
-            ต้นทุน
-        </label>
+        <div class="price-grid">
+            {% for size_code, size_name in [('s','S'), ('m','M'), ('l','L'), ('xl','XL'), ('2xl','2XL'), ('3xl','3XL')] %}
+            <div class="size-box">
+                <div class="size-title">{{ size_name }}</div>
+                
+                <label class="form-label">ต้นทุน (บาท)</label>
+                <input type="number" name="cost_{{ size_code }}" class="form-input" step="0.01" min="0" value="0">
 
-        <input
-            type="number"
-            name="cost_l"
-            step="0.01"
-            min="0"
-            value="0"
-        >
+                <label class="form-label">ราคาขาย (บาท)</label>
+                <input type="number" name="price_{{ size_code }}" class="form-input" step="0.01" min="0" value="0">
 
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_l"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_l"
-            min="0"
-            step="1"
-            value="0"
-        >
-
-    </div>
-
-
-    <!-- ================= XL ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            XL
+                <label class="form-label">Stock เริ่มต้น</label>
+                <input type="number" name="stock_{{ size_code }}" class="form-input stock-input" min="0" step="1" value="0">
+            </div>
+            {% endfor %}
         </div>
 
-        <label>
-            ต้นทุน
-        </label>
-
-        <input
-            type="number"
-            name="cost_xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_xl"
-            min="0"
-            step="1"
-            value="0"
-        >
-
-    </div>
-
-
-    <!-- ================= 2XL ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            2XL
-        </div>
-
-        <label>
-            ต้นทุน
-        </label>
-
-        <input
-            type="number"
-            name="cost_2xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_2xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_2xl"
-            min="0"
-            step="1"
-            value="0"
-        >
-
-    </div>
-
-
-    <!-- ================= 3XL ================= -->
-
-    <div class="size-box">
-
-        <div class="size-title">
-            3XL
-        </div>
-
-        <label>
-            ต้นทุน
-        </label>
-
-        <input
-            type="number"
-            name="cost_3xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            ราคาขาย
-        </label>
-
-        <input
-            type="number"
-            name="price_3xl"
-            step="0.01"
-            min="0"
-            value="0"
-        >
-
-        <label>
-            Stock เริ่มต้น
-        </label>
-
-        <input
-            class="stock-input"
-            type="number"
-            name="stock_3xl"
-            min="0"
-            step="1"
-            value="0"
-        >
-
-    </div>
-
-
-</div>
-
-
-<button
-    class="save-btn"
-    type="submit"
->
-
-    💾 บันทึกสินค้า
-
-</button>
-
-
-</form>
-
-<!-- ==========================================
-     สินค้าทั้งหมด
-========================================== -->
-
-<div class="form-title">
-
-
-📋 สินค้าทั้งหมด
-
-
-</div>
-
-{% if products %}
-
-
-{% for product in products %}
-
-<div class="product-card">
-
-
-    <div class="product-title">
-
-        <span>
-            👕 {{ product.category }}
-        </span>
-
-        <div class="product-actions">
-
-            <!-- แก้ชื่อ -->
-            <button
-                type="button"
-                class="product-edit-btn"
-                onclick="editProductName({{ product.id }})"
-            >
-                ✏️ แก้ไข
-            </button>
-
-
-            <!-- ลบสินค้า -->
-            <form
-                action="/products/delete"
-                method="post"
-                onsubmit="return confirm(
-                    'ต้องการลบสินค้า {{ product.category }} ใช่หรือไม่?'
-                );"
-            >
-
-                <input
-                    type="hidden"
-                    name="product_id"
-                    value="{{ product.id }}"
-                >
-
-                <button
-                    type="submit"
-                    class="product-delete-btn"
-                >
-                    🗑️ ลบ
-                </button>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-    <!-- แก้ชื่อสินค้า -->
-
-    <form
-        id="edit-product-{{ product.id }}"
-        class="product-edit-form"
-        action="/products/update"
-        method="post"
-    >
-
-        <input
-            type="hidden"
-            name="product_id"
-            value="{{ product.id }}"
-        >
-
-        <input
-            type="text"
-            name="category"
-            value="{{ product.category }}"
-            required
-        >
-
-        <button
-            type="submit"
-            class="product-save-name"
-        >
-            💾 บันทึก
+        <button class="save-btn" type="submit">
+            💾 บันทึกสินค้าใหม่
         </button>
-
     </form>
 
+    <!-- Section 2: สินค้าทั้งหมด -->
+    <div class="section-header">
+        📋 รายการสินค้าทั้งหมด
+    </div>
 
-    {% if product.sizes %}
-
-
-        {% for item in product.sizes %}
-
-        <div class="price-row">
-
-
-            <!-- SIZE -->
-
-            <div class="size-label">
-
-                {{ item[1] }}
-
+    {% if products %}
+        {% for product in products %}
+        <div class="product-card">
+            
+            <div class="product-header">
+                <span class="product-name">👕 {{ product.category }}</span>
+                <div class="product-actions">
+                    <button type="button" class="btn-soft-blue" onclick="editProductName({{ product.id }})">
+                        ✏️ แก้ชื่อ
+                    </button>
+                    
+                    <form action="/products/delete" method="post" style="display:inline;" onsubmit="return confirm('ต้องการลบสินค้า {{ product.category }} ใช่หรือไม่?');">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <button type="submit" class="btn-soft-red">
+                            🗑️ ลบ
+                        </button>
+                    </form>
+                </div>
             </div>
 
-
-            <!-- COST -->
-
-            <div class="price-value">
-
-                ต้นทุน
-
-                <b>
-                    {{ "%.2f"|format(item[2]) }}
-                </b>
-
-                บาท
-
-            </div>
-
-
-            <!-- PRICE -->
-
-            <div class="price-value">
-
-                ขาย
-
-                <b>
-                    {{ "%.2f"|format(item[3]) }}
-                </b>
-
-                บาท
-
-            </div>
-
-
-            <!-- EDIT -->
-
-            <form
-                class="edit-form"
-                action="/products/update-price"
-                method="post"
-            >
-
-                <input
-                    type="hidden"
-                    name="price_id"
-                    value="{{ item[0] }}"
-                >
-
-                <input
-                    type="number"
-                    name="cost"
-                    step="0.01"
-                    min="0"
-                    value="{{ item[2] }}"
-                    required
-                >
-
-                <input
-                    type="number"
-                    name="price"
-                    step="0.01"
-                    min="0"
-                    value="{{ item[3] }}"
-                    required
-                >
-
-                <button
-                    class="edit-btn"
-                    type="submit"
-                >
-
-                    ✏️ แก้
-
-                </button>
-
+            <!-- ฟอร์มแก้ไขชื่อสินค้า -->
+            <form id="edit-product-{{ product.id }}" class="product-edit-form" action="/products/update" method="post">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="text" name="category" class="form-input" value="{{ product.category }}" required>
+                <button type="submit" class="btn-sm-dark">บันทึก</button>
             </form>
 
+            <!-- รายการไซส์ / ราคา -->
+            {% if product.sizes %}
+                <div style="margin-top: 10px;">
+                {% for item in product.sizes %}
+                <div class="price-row">
+                    
+                    <div>
+                        <span class="badge-size">{{ item[1] }}</span>
+                    </div>
 
-            <!-- DELETE SIZE PRICE -->
+                    <div class="price-info">
+                        ต้นทุน <b>{{ "%.2f"|format(item[2]) }}</b> ฿
+                    </div>
 
-            <form
-                action="/products/delete-price"
-                method="post"
-                onsubmit="return confirm('ต้องการลบราคาไซส์ {{ item[1] }} ใช่หรือไม่?');"
-            >
+                    <div class="price-info">
+                        ขาย <b>{{ "%.2f"|format(item[3]) }}</b> ฿
+                    </div>
 
-                <input
-                    type="hidden"
-                    name="price_id"
-                    value="{{ item[0] }}"
-                >
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <form class="edit-form-group" action="/products/update-price" method="post">
+                            <input type="hidden" name="price_id" value="{{ item[0] }}">
+                            <input type="number" name="cost" class="form-input" step="0.01" min="0" value="{{ item[2] }}" placeholder="ต้นทุน" required>
+                            <input type="number" name="price" class="form-input" step="0.01" min="0" value="{{ item[3] }}" placeholder="ราคาขาย" required>
+                            <button class="btn-sm-dark" type="submit">✏️</button>
+                        </form>
 
-                <button
-                    class="delete-btn"
-                    type="submit"
-                >
+                        <form action="/products/delete-price" method="post" onsubmit="return confirm('ต้องการลบราคาไซส์ {{ item[1] }} ใช่หรือไม่?');">
+                            <input type="hidden" name="price_id" value="{{ item[0] }}">
+                            <button class="btn-sm-icon" type="submit" title="ลบไซส์นี้">🗑️</button>
+                        </form>
+                    </div>
 
-                    🗑️
-
-                </button>
-
-            </form>
-
+                </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div style="padding: 15px 0; color: #94a3b8; font-size: 14px;">ยังไม่มีการตั้งราคาในไซส์ต่างๆ</div>
+            {% endif %}
 
         </div>
-
         {% endfor %}
-
-
     {% else %}
-
-        <div class="empty">
-
-            ยังไม่มีราคา
-
+        <div class="empty-box">
+            🛒 ยังไม่มีข้อมูลสินค้าในระบบ
         </div>
-
     {% endif %}
 
-
 </div>
 
-{% endfor %}
-
-
-{% else %}
-
-
-<div class="empty">
-
-    ยังไม่มีสินค้า
-
-</div>
-
-
-{% endif %}
 <script>
-
 function editProductName(productId){
-
-    const form =
-        document.getElementById(
-            "edit-product-" + productId
-        );
-
-    if(!form){
-        return;
-    }
+    const form = document.getElementById("edit-product-" + productId);
+    if(!form) return;
 
     if(form.style.display === "flex"){
-
         form.style.display = "none";
-
-    }else{
-
+    } else {
         form.style.display = "flex";
-
-        const input =
-            form.querySelector(
-                'input[name="category"]'
-            );
-
+        const input = form.querySelector('input[name="category"]');
         if(input){
-
             input.focus();
-
             input.select();
-
         }
-
     }
-
 }
-
 </script>
 
 {% endblock %}

@@ -66,8 +66,19 @@
 }
 .btn-line:hover { background-color: #05b34c !important; }
 
+/* Section Header for Cards */
+.section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #4b5563;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* Cards สรุปยอด */
-.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
 .card-box { background: white; padding: 20px; border-radius: 16px; border: 1px solid #e5e7eb; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
 .card-box h3 { margin: 0 0 10px 0; font-size: 14px; color: #6b7280; font-weight: 500; }
 .card-box p { margin: 0; font-size: 24px; font-weight: 700; }
@@ -188,21 +199,63 @@
         </div>
     </div>
 
-    <!-- Summary Cards -->
+    <!-- แถบเลือกเดือนสำหรับดูประวัติประจำเดือน (แสดงเมื่ออยู่ในหมวด personal) -->
+    {% if summary.selected_scope == 'personal' %}
+    <div class="panel" style="margin-bottom: 20px; padding: 12px 20px; background: #faf5ff; border: 1px solid #e9d5ff;">
+        <form method="GET" action="/account" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <input type="hidden" name="scope" value="personal">
+            <label style="font-weight: 600; color: #6b21a8; font-size: 13.5px;">📅 เลือกเดือนสำหรับสรุปยอดประจำเดือน:</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="month" name="selected_month" value="{{ selected_month }}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #d8b4fe; font-size: 13.5px;">
+                <button type="submit" class="tab-btn" style="background: #9333ea; color: white; border: none; padding: 6px 14px;">ค้นหา</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards: รายวัน (เมื่อเลือก personal) หรือ ยอดรวมสะสม (เมื่อเลือกหมวดอื่น) -->
+    <div class="section-title">
+        {% if summary.selected_scope == 'personal' %}
+            ☀️ ยอดตัดรอบวันนี้ (Daily)
+        {% else %}
+            📊 ยอดรวมสะสม
+        {% endif %}
+    </div>
     <div class="cards-grid">
         <div class="card-box">
-            <h3>รายรับรวม</h3>
+            <h3>รายรับ{% if summary.selected_scope == 'personal' %}วันนี้{% else %}รวม{% endif %}</h3>
             <p class="inc">฿{{ "%.2f"|format(summary.income) }}</p>
         </div>
         <div class="card-box">
-            <h3>รายจ่ายรวม</h3>
+            <h3>รายจ่าย{% if summary.selected_scope == 'personal' %}วันนี้{% else %}รวม{% endif %}</h3>
             <p class="exp">฿{{ "%.2f"|format(summary.expense) }}</p>
         </div>
         <div class="card-box">
-            <h3>คงเหลือ</h3>
+            <h3>คงเหลือ{% if summary.selected_scope == 'personal' %}วันนี้{% endif %}</h3>
             <p class="bal">฿{{ "%.2f"|format(summary.balance) }}</p>
         </div>
     </div>
+
+    <!-- Summary Cards: สรุปประจำเดือน (แสดงเฉพาะหมวด personal) -->
+    {% if summary.selected_scope == 'personal' and monthly_summary %}
+    <div class="section-title">
+        🗓️ ยอดรวมประจำเดือน ({{ selected_month }})
+    </div>
+    <div class="cards-grid" style="margin-bottom: 30px;">
+        <div class="card-box" style="background: #f8fafc;">
+            <h3>รายรับรวมเดือนนี้</h3>
+            <p class="inc">฿{{ "%.2f"|format(monthly_summary.income) }}</p>
+        </div>
+        <div class="card-box" style="background: #f8fafc;">
+            <h3>รายจ่ายรวมเดือนนี้</h3>
+            <p class="exp">฿{{ "%.2f"|format(monthly_summary.expense) }}</p>
+        </div>
+        <div class="card-box" style="background: #f8fafc;">
+            <h3>คงเหลือรวมเดือนนี้</h3>
+            <p class="bal">฿{{ "%.2f"|format(monthly_summary.balance) }}</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- กล่องจบงาน / เคลียร์เฉพาะยอดรายรับงาน -->
     {% if summary.selected_scope == 'work' %}
@@ -278,7 +331,7 @@
 
     <!-- ประวัติการทำรายการ -->
     <div class="panel">
-        <h2>📜 ประวัติการทำรายการล่าสุด</h2>
+        <h2>📜 ประวัติการทำรายการ</h2>
 
         <!-- ตาราง Desktop -->
         <div class="table-responsive">
@@ -477,9 +530,9 @@ function closeEditModal() {
 }
 
 const labels = JSON.parse('{{ summary.chart_labels | tojson | safe }}');
-const data = JSON.parse('{{ summary.chart_data | tojson | safe }}');;
+const data = JSON.parse('{{ summary.chart_data | tojson | safe }}');
 
-if (labels.length > 0) {
+if (labels && labels.length > 0) {
     const ctx = document.getElementById('expenseChart').getContext('2d');
     new Chart(ctx, {
         type: 'doughnut',

@@ -3,698 +3,417 @@
 {% block content %}
 
 <style>
-
-.receive-page{
-    max-width:900px;
-    margin:auto;
+/* จัดโครงสร้างหน้ารับสินค้าเข้า สไตล์ Minimal Soft Pastel */
+.receive-page {
+    max-width: 800px;
+    margin: 15px auto 40px;
+    padding: 0 20px;
 }
 
-/* =========================
-   Title
-========================= */
-
-.receive-title{
-    font-size:28px;
-    font-weight:bold;
-    margin-bottom:18px;
+.receive-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
 }
 
-/* =========================
-   Card
-========================= */
-
-.receive-card{
-    background:white;
-    border-radius:20px;
-    padding:22px;
-    margin-bottom:20px;
-    box-shadow:0 3px 12px rgba(0,0,0,.10);
+/* การ์ดรับข้อมูล */
+.receive-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 
-/* =========================
-   Card Title
-========================= */
-
-.receive-card-title{
-    font-size:22px;
-    font-weight:bold;
-    margin-bottom:18px;
+.receive-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* =========================
-   Product / Size buttons
-========================= */
+/* Container ปุ่มเลือกสินค้า / ไซส์ */
+.btn-group-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
 
+/* สไตล์ปุ่มกดเลือกสินค้า และไซส์ (Pastel Buttons) */
 .receive-page .product-btn,
-.receive-page .size-btn{
-
-    width:auto;
-
-    min-width:120px;
-
-    padding:16px 24px;
-
-    margin:5px;
-
-    border:none;
-
-    border-radius:14px;
-
-    background:#f1f1f1;
-
-    box-shadow:none;
-
-    font-size:19px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-    transition:.18s ease;
-
+.receive-page .size-btn {
+    width: auto;
+    min-width: 85px;
+    padding: 12px 20px;
+    margin: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
 }
-
-
-/* Hover */
 
 .receive-page .product-btn:hover,
-.receive-page .size-btn:hover{
-
-    background:#ff6b00;
-
-    color:white;
-
-    transform:translateY(-2px);
-
+.receive-page .size-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    transform: translateY(-2px);
 }
 
-
-/* Active */
-
-.receive-page .product-btn.active,
-.receive-page .size-btn.active{
-
-    background:#ff6b00;
-
-    color:white;
-
+/* สถานะเมื่อปุ่มถูกเลือก (Active State) */
+.receive-page .product-btn.active {
+    background: #e0e7ff !important;
+    color: #4338ca !important;
+    border-color: #a5b4fc !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15) !important;
 }
 
-
-/* =========================
-   Selected value
-========================= */
-
-.receive-selected{
-
-    width:100%;
-
-    padding:15px;
-
-    font-size:20px;
-
-    font-weight:bold;
-
-    border-radius:12px;
-
-    border:1px solid #ddd;
-
-    background:#fafafa;
-
-    box-sizing:border-box;
-
-    margin-top:12px;
-
+.receive-page .size-btn.active {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border-color: #fde68a !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15) !important;
 }
 
-
-/* =========================
-   Quantity
-========================= */
-
-#quantity{
-
-    width:100%;
-
-    padding:16px;
-
-    font-size:24px;
-
-    font-weight:bold;
-
-    text-align:center;
-
-    border-radius:12px;
-
-    border:1px solid #ddd;
-
-    box-sizing:border-box;
-
+/* ช่องแสดงผลรายการที่เลือก */
+.receive-selected {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    background: #f8fafc;
+    color: #64748b;
+    box-sizing: border-box;
 }
 
-
-/* =========================
-   Save button
-========================= */
-
-.receive-save{
-
-    width:100%;
-
-    padding:18px;
-
-    border:none;
-
-    border-radius:15px;
-
-    background:#111;
-
-    color:white;
-
-    font-size:23px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-    transition:.18s ease;
-
-    box-shadow:0 5px 15px rgba(0,0,0,.15);
-
+/* แสดงสต็อกปัจจุบัน */
+#currentStock {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #166534;
 }
 
-
-.receive-save:hover{
-
-    background:#ff6b00;
-
-    transform:translateY(-2px);
-
+/* ช่องกรอกจำนวน */
+#quantity {
+    width: 100%;
+    padding: 14px;
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+    color: #1e293b;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
 }
 
-
-/* =========================
-   Recent
-========================= */
-
-.receive-recent{
-
-    background:white;
-
-    border-radius:20px;
-
-    padding:22px;
-
-    margin-top:20px;
-
-    box-shadow:0 3px 12px rgba(0,0,0,.10);
-
+#quantity:focus {
+    outline: none;
+    border-color: #3b82f6;
 }
 
-
-.receive-recent-title{
-
-    font-size:22px;
-
-    font-weight:bold;
-
-    margin-bottom:15px;
-
+/* ปุ่มรับสินค้าเข้าสต็อก (Soft Orange Pastel Button) */
+.receive-save {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: #ff8c42;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(255, 140, 66, 0.25);
+    margin-top: 10px;
 }
 
-
-.receive-item{
-
-    padding:13px 0;
-
-    border-bottom:1px solid #eee;
-
-    font-size:18px;
-
+.receive-save:hover {
+    background: #f97316;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
 }
 
-
-.receive-item:last-child{
-
-    border-bottom:none;
-
+/* กล่องแสดงรายการรับเข้าล่าสุด */
+.receive-recent {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 22px 24px;
+    margin-top: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 
-
-/* =========================
-   Toast
-========================= */
-
-#toast{
-
-    position:fixed;
-
-    bottom:30px;
-
-    left:50%;
-
-    transform:translateX(-50%);
-
-    background:#111;
-
-    color:white;
-
-    padding:16px 30px;
-
-    border-radius:15px;
-
-    display:none;
-
-    font-size:20px;
-
-    font-weight:bold;
-
-    z-index:9999;
-
-    box-shadow:0 5px 20px rgba(0,0,0,.25);
-
+.receive-recent-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 12px;
 }
 
+.receive-item {
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-/* =========================
-   Mobile
-========================= */
+.receive-item:last-child {
+    margin-bottom: 0;
+}
 
-@media(max-width:600px){
+/* Notification Toast */
+#toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 30px;
+    display: none;
+    font-size: 15px;
+    font-weight: 600;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
 
-    .receive-page{
-
-        width:100%;
-
+@media(max-width:600px) {
+    .receive-page {
+        margin: 10px auto 30px;
     }
-
-    .receive-title{
-
-        font-size:24px;
-
+    .receive-card {
+        padding: 18px;
     }
-
-    .receive-card{
-
-        padding:18px;
-
-    }
-
     .receive-page .product-btn,
-    .receive-page .size-btn{
-
-        min-width:100px;
-
-        padding:14px 18px;
-
-        font-size:17px;
-
+    .receive-page .size-btn {
+        min-width: 70px;
+        padding: 10px 14px;
+        font-size: 14px;
     }
-
 }
-
 </style>
 
-
 <script>
+/* =========================
+   ระบบจัดเรียงปุ่มไซส์อัตโนมัติ
+========================= */
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'FREE', 'FREESIZE'];
+
+function sortSizeButtons() {
+    const sizeContainers = document.querySelectorAll('.receive-card');
+    sizeContainers.forEach(card => {
+        const sizeBtns = Array.from(card.querySelectorAll('.size-btn'));
+        if (sizeBtns.length > 0) {
+            const parent = sizeBtns[0].parentNode;
+            sizeBtns.sort((a, b) => {
+                const textA = a.innerText.trim().toUpperCase();
+                const textB = b.innerText.trim().toUpperCase();
+                const indexA = SIZE_ORDER.indexOf(textA) !== -1 ? SIZE_ORDER.indexOf(textA) : 99;
+                const indexB = SIZE_ORDER.indexOf(textB) !== -1 ? SIZE_ORDER.indexOf(textB) : 99;
+                return indexA - indexB;
+            });
+            sizeBtns.forEach(btn => parent.appendChild(btn));
+        }
+    });
+}
 
 /* =========================
    เลือกสินค้า
 ========================= */
-
 function setProduct(product, btn){
-
     document.getElementById("category").value = product;
-
     document.querySelectorAll(".product-btn").forEach(
-
         b => b.classList.remove("active")
-
     );
-
     btn.classList.add("active");
-
+    loadCurrentStock();
 }
-
 
 /* =========================
    เลือกไซส์
 ========================= */
-
-function setSize(size,btn){
-
+function setSize(size, btn){
     document.getElementById("size").value = size;
-
     document.querySelectorAll(".size-btn").forEach(
         b => b.classList.remove("active")
     );
-
     btn.classList.add("active");
-
     loadCurrentStock();
 }
 
 function loadCurrentStock(){
-
-    const category =
-        document.getElementById("category").value;
-
-    const size =
-        document.getElementById("size").value;
-
-    const stockBox =
-        document.getElementById("currentStock");
+    const category = document.getElementById("category").value;
+    const size = document.getElementById("size").value;
+    const stockBox = document.getElementById("currentStock");
 
     if(category === "" || size === ""){
-
-        stockBox.innerHTML =
-            "Stock ปัจจุบัน: -";
-
+        stockBox.innerHTML = "Stock ปัจจุบัน: -";
         return;
     }
 
-    stockBox.innerHTML =
-        "กำลังตรวจสอบ Stock...";
+    stockBox.innerHTML = "กำลังตรวจสอบ Stock...";
 
-    fetch(
-        "/api/receive-stock?category="
-        + encodeURIComponent(category)
-        + "&size="
-        + encodeURIComponent(size)
-    )
-
+    fetch("/api/receive-stock?category=" + encodeURIComponent(category) + "&size=" + encodeURIComponent(size))
     .then(response => response.json())
-
     .then(data => {
-
         if(data.success){
-
-            stockBox.innerHTML =
-                "Stock ปัจจุบัน: "
-                + data.stock
-                + " ตัว";
-
+            stockBox.innerHTML = "Stock ปัจจุบัน: <b>" + data.stock + "</b> ตัว";
         }else{
-
-            stockBox.innerHTML =
-                "Stock ปัจจุบัน: -";
-
+            stockBox.innerHTML = "Stock ปัจจุบัน: -";
         }
-
     })
-
     .catch(error => {
-
         console.error(error);
-
-        stockBox.innerHTML =
-            "ไม่สามารถตรวจสอบ Stock ได้";
-
+        stockBox.innerHTML = "ไม่สามารถตรวจสอบ Stock ได้";
     });
 }
 
 /* =========================
-   Toast
+   Toast & Form Reset
 ========================= */
-
 function showToast(text){
-
     const toast = document.getElementById("toast");
-
     toast.innerHTML = text;
-
     toast.style.display = "block";
-
     setTimeout(function(){
-
         toast.style.display = "none";
-
-    },1200);
-
+    }, 1500);
 }
-
-
-/* =========================
-   ล้างฟอร์ม
-========================= */
 
 function clearForm(){
-
     document.getElementById("category").value = "";
-
     document.getElementById("size").value = "";
-
-    document.getElementById("currentStock").innerHTML =
-        "Stock ปัจจุบัน: -";
-
+    document.getElementById("currentStock").innerHTML = "Stock ปัจจุบัน: -";
     document.getElementById("quantity").value = 1;
-
-    document.querySelectorAll(".product-btn").forEach(
-
-        b => b.classList.remove("active")
-
-    );
-
-    document.querySelectorAll(".size-btn").forEach(
-
-        b => b.classList.remove("active")
-
-    );
-
+    document.querySelectorAll(".product-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
     document.getElementById("quantity").focus();
-
 }
-
 
 /* =========================
    บันทึกรับสินค้า
 ========================= */
-
 function saveReceive(){
-
-    const category =
-        document.getElementById("category").value;
-
-    const size =
-        document.getElementById("size").value;
-
-    const quantity =
-        document.getElementById("quantity").value;
-
+    const category = document.getElementById("category").value;
+    const size = document.getElementById("size").value;
+    const quantity = document.getElementById("quantity").value;
 
     if(category === "" || size === ""){
-
-        showToast("เลือกสินค้าและไซส์ก่อน");
-
+        showToast("⚠️ กรุณาเลือกสินค้าและไซส์ให้ครบถ้วน");
         return;
     }
 
-
     fetch("/api/receive",{
-
-        method:"POST",
-
-        headers:{
-            "Content-Type":
-                "application/x-www-form-urlencoded"
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
         },
-
-        body:
-            "category="
-            + encodeURIComponent(category)
-            + "&size="
-            + encodeURIComponent(size)
-            + "&quantity="
-            + encodeURIComponent(quantity)
-
+        body: "category=" + encodeURIComponent(category) +
+              "&size=" + encodeURIComponent(size) +
+              "&quantity=" + encodeURIComponent(quantity)
     })
-
     .then(response => response.json())
-
     .then(data => {
-
         showToast(data.message);
-
-
         if(data.success){
-
-            // ==============================
-            // อัปเดต Stock ทันที
-            // ==============================
-
             loadCurrentStock();
-
-
-            // ==============================
-            // โหลดรายการรับเข้าล่าสุด
-            // ==============================
-
             loadRecentReceive();
-
-
-            // ==============================
-            // ล้างจำนวน
-            // ==============================
-
-            document.getElementById(
-                "quantity"
-            ).value = 1;
-
-            document.getElementById(
-                "quantity"
-            ).focus();
-
+            document.getElementById("quantity").value = 1;
+            document.getElementById("quantity").focus();
         }
-
     })
-
     .catch(error => {
-
         console.error(error);
-
-        showToast(
-            "เกิดข้อผิดพลาดในการรับสินค้า"
-        );
-
+        showToast("เกิดข้อผิดพลาดในการรับสินค้า");
     });
-
 }
-
 
 /* =========================
    โหลดรายการรับเข้าล่าสุด
 ========================= */
-
 function loadRecentReceive(){
-
     fetch("/api/recent-receive")
-
     .then(response => response.json())
-
     .then(data => {
-
         let html = "";
-
         if(!data.items || data.items.length === 0){
-
-            html = "ยังไม่มีรายการรับเข้า";
-
-        }
-        else{
-
+            html = "<div style='color:#94a3b8; text-align:center;'>ยังไม่มีรายการรับเข้า</div>";
+        } else {
             data.items.forEach(item => {
-
-                html +=
-                    "<div class='receive-item'>" +
-
-                    "📦 " +
-
-                    item[1] +
-
-                    " " +
-
-                    item[2] +
-
-                    " +" +
-
-                    item[3] +
-
-                    "</div>";
-
+                html += "<div class='receive-item'>" +
+                        "<span>📦 <b>" + item[1] + "</b> (" + item[2] + ")</span>" +
+                        "<span style='color:#16a34a; font-weight:800;'>+" + item[3] + "</span>" +
+                        "</div>";
             });
-
         }
-
-
-        document.getElementById(
-            "recentReceive"
-        ).innerHTML = html;
-
+        document.getElementById("recentReceive").innerHTML = html;
     })
-
     .catch(error => {
-
         console.error(error);
-
     });
-
 }
 
-
 /* =========================
-   เริ่มต้นหน้า
+   เริ่มต้นการทำงาน
 ========================= */
-
 window.onload = function(){
-
-    document
-        .getElementById("quantity")
-        .focus();
-
+    sortSizeButtons(); // จัดเรียงไซส์อัตโนมัติ
+    document.getElementById("quantity").focus();
     loadRecentReceive();
-
-    setInterval(
-        loadRecentReceive,
-        2000
-    );
-
+    setInterval(loadRecentReceive, 2000);
 };
 
-
-/* =========================
-   Enter = รับสินค้า
-========================= */
-
-document.addEventListener(
-
-    "keydown",
-
-    function(e){
-
-        if(e.key === "Enter"){
-
-            e.preventDefault();
-
-            saveReceive();
-
-        }
-
+document.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        e.preventDefault();
+        saveReceive();
     }
-
-);
-
+});
 </script>
-
 
 <div class="receive-page">
 
-
-    <!-- =====================
-         TITLE
-    ====================== -->
-
     <div class="receive-title">
-
-        📦 รับสินค้าเข้า
-
+        📦 รับสินค้าเข้าสต๊อก
     </div>
 
-
-    <!-- =====================
-         PRODUCT
-    ====================== -->
-
+    <!-- 1. สินค้า -->
     <div class="receive-card">
-
         <div class="receive-card-title">
-
-            👕 สินค้า
-
+            👕 เลือกสินค้า
         </div>
-
-
-        {{ product_buttons|safe }}
-
+        
+        <div class="btn-group-container">
+            {{ product_buttons|safe }}
+        </div>
 
         <input
             id="category"
@@ -702,25 +421,17 @@ document.addEventListener(
             readonly
             placeholder="ยังไม่ได้เลือกสินค้า"
         >
-
     </div>
 
-
-    <!-- =====================
-         SIZE
-    ====================== -->
-
+    <!-- 2. ไซส์ -->
     <div class="receive-card">
-
         <div class="receive-card-title">
-
-            📏 ไซส์
-
+            📏 เลือกไซส์
         </div>
 
-
-        {{ size_buttons|safe }}
-
+        <div class="btn-group-container">
+            {{ size_buttons|safe }}
+        </div>
 
         <input
             id="size"
@@ -728,95 +439,48 @@ document.addEventListener(
             readonly
             placeholder="ยังไม่ได้เลือกไซส์"
         >
-        <div id="currentStock" style="
-            margin-top:15px;
-            padding:14px;
-            background:#f7f7f7;
-            border-radius:12px;
-            text-align:center;
-            font-size:20px;
-            font-weight:bold;
-            color:#555;
-        ">
+        
+        <div id="currentStock">
             Stock ปัจจุบัน: -
         </div>
-
     </div>
 
-
-    <!-- =====================
-         QUANTITY
-    ====================== -->
-
+    <!-- 3. จำนวน -->
     <div class="receive-card">
-
         <div class="receive-card-title">
-
-            🔢 จำนวน
-
+            🔢 จำนวนที่รับเข้า
         </div>
-
 
         <input
-
             id="quantity"
-
             type="number"
-
             value="1"
-
             min="1"
-
         >
-
     </div>
 
-
-    <!-- =====================
-         SAVE
-    ====================== -->
-
+    <!-- 4. ปุ่มบันทึก -->
     <button
-
         class="receive-save"
-
         type="button"
-
         onclick="saveReceive()"
-
     >
-
-        📦 รับสินค้าเข้าสต๊อก
-
+        📦 บันทึกรับสินค้าเข้าสต๊อก
     </button>
 
-
-    <!-- =====================
-         RECENT
-    ====================== -->
-
+    <!-- 5. ประวัติการรับเข้าล่าสุด -->
     <div class="receive-recent">
-
         <div class="receive-recent-title">
-
-            🧾 รับเข้าล่าสุด
-
+            🧾 รายการรับเข้าล่าสุด
         </div>
-
 
         <div id="recentReceive">
-
             กำลังโหลด...
-
         </div>
-
     </div>
-
 
 </div>
 
-
 <div id="toast"></div>
-
 
 {% endblock %}
