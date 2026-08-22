@@ -1,6 +1,4 @@
 import io
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Form, Query, Request, status
@@ -19,9 +17,6 @@ from app.database.account_db import (
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
-
-# 🔑 ใส่ Token ของ LINE Notify ของคุณตรงนี้
-LINE_NOTIFY_TOKEN = "YOUR_LINE_NOTIFY_TOKEN"
 
 
 @router.get("/account", response_class=HTMLResponse)
@@ -91,50 +86,6 @@ def export_excel(
         output,
         headers=headers,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-
-
-# 💬 API ส่งสรุปยอดเข้า LINE (ตัด requests ออก ใช้ urllib แทน)
-@router.post("/api/account/send-line")
-def send_line_report(
-    scope: str = Form("all"),
-    income: float = Form(0.0),
-    expense: float = Form(0.0),
-    balance: float = Form(0.0),
-):
-    scope_name = (
-        "ทั้งหมด"
-        if scope == "all"
-        else ("ชีวิตประจำวัน" if scope == "personal" else "งาน / ร้านค้า")
-    )
-
-    message = (
-        f"\n📊 สรุปยอดบัญชี ({scope_name})\n"
-        f"🟢 รายรับรวม: ฿{income:,.2f}\n"
-        f"🔴 รายจ่ายรวม: ฿{expense:,.2f}\n"
-        f"💰 คงเหลือสุทธิ: ฿{balance:,.2f}\n"
-        f"-------------------\n"
-        f"⏰ ข้อมูล ณ วันที่: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    )
-
-    url = "https://notify-api.line.me/api/notify"
-    headers = {
-        "Authorization": f"Bearer {LINE_NOTIFY_TOKEN}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    data = urllib.parse.urlencode({"message": message}).encode("utf-8")
-
-    try:
-        req = urllib.request.Request(
-            url, data=data, headers=headers, method="POST"
-        )
-        with urllib.request.urlopen(req) as response:
-            pass
-    except Exception as e:
-        print(f"Error sending LINE Notify: {e}")
-
-    return RedirectResponse(
-        url=f"/account?scope={scope}", status_code=status.HTTP_303_SEE_OTHER
     )
 
 

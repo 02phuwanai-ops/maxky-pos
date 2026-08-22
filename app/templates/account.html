@@ -438,31 +438,28 @@
 </div>
 
 <script>
-// ฟังก์ชันส่งสรุปเข้า LINE
+// ✨ ฟังก์ชันส่งสรุปเข้า LINE ทั่วไป (เปิด LINE Share ให้เลือกผู้รับเอง)
 function sendSummaryToLine() {
-    if (!confirm("คุณต้องการส่งสรุปยอดบัญชีเข้า LINE ใช่หรือไม่?")) return;
+    const scope = "{{ summary.selected_scope }}";
+    const scopeName = scope === 'all' ? 'ทั้งหมด' : (scope === 'personal' ? 'ชีวิตประจำวัน' : 'งาน / ร้านค้า');
+    
+    const income = Number("{{ summary.income or 0 }}").toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    const expense = Number("{{ summary.expense or 0 }}").toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    const balance = Number("{{ summary.balance or 0 }}").toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 
-    const formData = new FormData();
-    formData.append('scope', "{{ summary.selected_scope }}");
-    formData.append('income', "{{ summary.income }}");
-    formData.append('expense', "{{ summary.expense }}");
-    formData.append('balance', "{{ summary.balance }}");
+    const message = 
+`📊 สรุปยอดบัญชี (${scopeName})
+🟢 รายรับรวม: ฿${income}
+🔴 รายจ่ายรวม: ฿${expense}
+💰 คงเหลือสุทธิ: ฿${balance}
+-------------------
+⏰ ข้อมูล ณ วันที่: ${dateStr}`;
 
-    fetch('/api/account/send-line', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok || response.redirected) {
-            alert('🚀 ส่งข้อมูลสรุปเข้า LINE เรียบร้อยแล้ว!\n(หากข้อความไม่เข้า กรุณาตรวจสอบ LINE_NOTIFY_TOKEN ในไฟล์ app/routes/account.py)');
-        } else {
-            alert('❌ เกิดข้อผิดพลาด ไม่สามารถส่ง LINE ได้');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ');
-    });
+    const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(message)}`;
+    window.open(lineUrl, '_blank');
 }
 
 function openEditModal(id, title, type, amount, category, scope) {
