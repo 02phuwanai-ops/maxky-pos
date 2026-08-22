@@ -51,18 +51,24 @@ def update_transaction(trans_id: int, title: str, trans_type: str, amount: float
     conn.commit()
     conn.close()
 
-def get_account_summary(selected_scope: str = "all"):
+def get_account_summary(selected_scope: str = "all", start_date: str = None, end_date: str = None):
     init_account_db()
     conn = sqlite3.connect(ACCOUNT_DB)
     cursor = conn.cursor()
     
-    # กำหนดเงื่อนไขการกรอง Scope และซ่อนรายการที่เคลียร์ไปแล้ว
+    # 1. เงื่อนไข Scope หลัก
     if selected_scope == "work":
         where_clause = " WHERE scope = 'work' AND (is_cleared IS NULL OR is_cleared = 0)"
     elif selected_scope == "personal":
         where_clause = " WHERE scope = 'personal'"
     else:
         where_clause = " WHERE (is_cleared IS NULL OR is_cleared = 0)"
+
+    # 2. เพิ่มเงื่อนไขการกรองวันที่ (ถ้ามีการส่งมา)
+    if start_date:
+        where_clause += f" AND DATE(created_at) >= '{start_date}'"
+    if end_date:
+        where_clause += f" AND DATE(created_at) <= '{end_date}'"
 
     # 1. รายรับรวม
     cursor.execute(f"SELECT IFNULL(SUM(amount), 0) FROM transactions{where_clause} AND type = 'income'")
