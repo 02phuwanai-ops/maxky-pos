@@ -1,4 +1,5 @@
 import io
+import urllib.parse
 import requests
 import pandas as pd
 from datetime import datetime
@@ -94,9 +95,13 @@ def send_line_report(
     scope: str = Form("all"),
     income: float = Form(0.0),
     expense: float = Form(0.0),
-    balance: float = Form(0.0)
+    balance: float = Form(0.0),
 ):
-    scope_name = "ทั้งหมด" if scope == 'all' else ("ชีวิตประจำวัน" if scope == 'personal' else "งาน / ร้านค้า")
+    scope_name = (
+        "ทั้งหมด"
+        if scope == "all"
+        else ("ชีวิตประจำวัน" if scope == "personal" else "งาน / ร้านค้า")
+    )
 
     message = (
         f"\n📊 สรุปยอดบัญชี ({scope_name})\n"
@@ -108,28 +113,24 @@ def send_line_report(
     )
 
     url = "https://notify-api.line.me/api/notify"
-    headers = {"Authorization": f"Bearer {LINE_NOTIFY_TOKEN}"}
-    payload = {"message": message}
+    headers = {
+        "Authorization": f"Bearer {LINE_NOTIFY_TOKEN}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    data = urllib.parse.urlencode({"message": message}).encode("utf-8")
 
     try:
-        requests.post(url, headers=headers, data=payload)
+        req = urllib.request.Request(
+            url, data=data, headers=headers, method="POST"
+        )
+        with urllib.request.urlopen(req) as response:
+            pass
     except Exception as e:
         print(f"Error sending LINE Notify: {e}")
 
-    return RedirectResponse(url=f"/account?scope={scope}", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@router.post("/api/account/add")
-def add_account_item(
-    title: str = Form(...),
-    type: str = Form(...),
-    amount: float = Form(...),
-    category: str = Form("ทั่วไป"),
-    scope: str = Form("personal")
-):
-    add_transaction(title, type, amount, category, scope)
-    return RedirectResponse(url=f"/account?scope={scope}", status_code=status.HTTP_303_SEE_OTHER)
-
+    return RedirectResponse(
+        url=f"/account?scope={scope}", status_code=status.HTTP_303_SEE_OTHER
+    )
 
 @router.post("/api/account/delete/{trans_id}")
 def delete_account_item(trans_id: int, current_scope: str = Form("all")):
