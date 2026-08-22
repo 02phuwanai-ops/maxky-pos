@@ -95,30 +95,62 @@
   .tab-btn { padding: 6px 10px; font-size: 12px; flex: 1; text-align: center; }
   .panel { padding: 16px; }
 
-  /* แสดง Card สไตล์ Mobile */
+  /* ซ่อนตาราง Desktop */
   .table-desktop { display: none; }
+  
+  /* ปรับแต่ง Mobile Card List ใหม่ให้คลีน */
   .mobile-tx-list { display: flex; flex-direction: column; gap: 10px; }
   
   .mobile-tx-item {
-      background: #f9fafb;
-      border: 1px solid #f3f4f6;
-      border-radius: 12px;
-      padding: 12px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
   }
-  .mobile-tx-header { display: flex; justify-content: space-between; align-items: center; }
-  .mobile-tx-body { display: flex; justify-content: space-between; align-items: center; }
-  .mobile-tx-title { font-weight: 600; color: #1f2937; font-size: 14px; }
-  .mobile-tx-category { font-size: 12px; color: #6b7280; }
+  
+  .mobile-tx-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  }
+
+  .mobile-tx-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+  }
+  
+  .mobile-tx-title {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+      line-height: 1.4;
+  }
+  
+  .mobile-tx-category {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 3px;
+  }
+
   .mobile-tx-footer {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      padding-top: 6px;
-      border-top: 1px dashed #e5e7eb;
-      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px solid #f3f4f6;
+  }
+
+  /* ปุ่มกดสไตล์มินิมอลแนวนอน */
+  .mobile-tx-footer .btn-action {
+      padding: 5px 12px;
+      font-size: 12px;
+      border-radius: 8px;
   }
 }
 </style>
@@ -310,13 +342,14 @@
                         <div class="mobile-tx-title">{{ item[1] }}</div>
                         <div class="mobile-tx-category">🏷️ {{ item[4] }}</div>
                     </div>
-                    <div class="amount-text {% if item[2] == 'income' %}inc{% else %}exp{% endif %}">
+                    <div class="amount-text {% if item[2] == 'income' %}inc{% else %}exp{% endif %}" style="font-size: 16px;">
                         {% if item[2] == 'income' %}+{% else %}-{% endif %}฿{{ "%.2f"|format(item[3]) }}
                     </div>
                 </div>
 
                 <div class="mobile-tx-footer">
-                    <div>
+                    <span style="font-size: 11px; color: #9ca3af;">ID: #{{ item[0] }}</span>
+                    <div style="display: flex; gap: 6px;">
                         <button class="btn-action btn-edit" 
                                 onclick="openEditModal('{{ item[0] }}', '{{ item[1] }}', '{{ item[2] }}', '{{ item[3] }}', '{{ item[4] }}', '{{ item[6] }}')">
                             ✏️ แก้ไข
@@ -328,8 +361,6 @@
                     </div>
                 </div>
             </div>
-            {% else %}
-            <div style="text-align: center; color: #9ca3af; padding: 20px;">ยังไม่มีข้อมูลรายการ</div>
             {% endfor %}
         </div>
     </div>
