@@ -15,6 +15,9 @@ from app.database.sales_db import (
     close_current_shift
 )
 
+# ✨ 1. Import ฟังก์ชันจัดการบัญชีเข้ามาเชื่อมต่อ
+from app.database.account_db import add_transaction
+
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
@@ -154,6 +157,18 @@ def api_sell(data: SellRequest):
                     delete_sale(p["sale_id"])
                 return {"success": False, "message": "❌ ไม่สามารถบันทึกรายการขายได้"}
 
+            # ✨ 2. บันทึกเข้าบัญชีร้านค้า (scope='work') เมื่อขายสำเร็จ
+            try:
+                add_transaction(
+                    title=f"ขาย POS: {category} ({size}) - {payment_method}",
+                    trans_type="income",
+                    amount=float(final_price),
+                    category="ขายสินค้า",
+                    scope="work"
+                )
+            except Exception as e:
+                print(f"Error syncing to Account DB: {e}")
+
             processed_items.append({"sale_id": sale_id, "category": category, "size": size})
             success_sales.append({"sale_id": sale_id, "category": category, "size": size, "stock": get_stock(category, size)})
 
@@ -209,7 +224,9 @@ def undo_sale(data: Optional[ShiftRequest] = None):
             "revenue": summary["total_revenue"]
         }
 
+    # ดึงข้อมูลจาก tuple: (sale_id, category, size, price, ...)
     sale_id, category, size = last[0], last[1], last[2]
+    price = last[3] if len(last) > 3 else 0.0
 
     if not increase_stock(category, size):
         return {"success": False, "message": f"❌ ไม่สามารถคืน Stock {category} {size} ได้"}
@@ -217,6 +234,19 @@ def undo_sale(data: Optional[ShiftRequest] = None):
     if not delete_sale(sale_id):
         reduce_stock(category, size)
         return {"success": False, "message": "❌ ไม่สามารถลบรายการขายได้"}
+
+    # ✨ 3. หักลบยอดในระบบบัญชีเมื่อยกเลิกรายการขาย
+    try:
+        if price > 0:
+            add_transaction(
+                title=f"ยกเลิกการขาย: {category} ({size})",
+                trans_type="expense",
+                amount=float(price),
+                category="ยกเลิกการขาย",
+                scope="work"
+            )
+    except Exception as e:
+        print(f"Error syncing Undo to Account DB: {e}")
 
     new_summary = _get_safe_summary(station_name, event_name)
 
@@ -253,7 +283,6 @@ def api_close_shift(data: ShiftRequest):
     station_name = data.station_name if data.station_name else "จุดขายที่ 1"
     event_name = data.event_name if data.event_name else ""
     
-    # 🔍 พิมพ์ดูค่าที่ส่งมาจากหน้าเว็บ
     print(f"\n================ [DEBUG FRONTEND REQUEST] ================")
     print(f"📌 STATION RECEIVE : '{station_name}'")
     print(f"📌 EVENT RECEIVE   : '{event_name}'")

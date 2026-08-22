@@ -19,6 +19,7 @@ from app.routes.size import router as size_router
 from app.routes.home import router as home_router
 from app.routes.sale import router as sale_router
 from app.routes.admin import router as admin_router
+from app.routes.account import router as account_router  # ✨ 1. Import account router
 
 from app.database.receive_db import create_receive_table
 from app.database.product_db import create_product_table
@@ -31,6 +32,7 @@ from app.database.stock_db import (
     create_stock_table,
     cleanup_orphan_stock
 )
+from app.database.account_db import init_account_db  # ✨ 2. Import ฟังก์ชันสร้างตารางบัญชี
 
 # นำเข้าสคริปต์รีเซ็ต
 import app.reset_db
@@ -87,6 +89,7 @@ app.include_router(history_router)
 app.include_router(excel_router)
 app.include_router(backup_router)
 app.include_router(product_router)
+app.include_router(account_router)  # ✨ 3. ลงทะเบียน account_router
 
 # ==========================================
 # Database Startup
@@ -101,6 +104,7 @@ def startup():
     create_stock_table()
     create_product_table()
     create_receive_table()
+    init_account_db()  # ✨ 4. สร้างตารางบัญชีรายรับ-รายจ่ายตอนเปิดแอป
 
     cleanup_orphan_stock()
 
@@ -146,6 +150,7 @@ def debug_routers():
         "excel": excel_router,
         "backup": backup_router,
         "product": product_router,
+        "account": account_router,  # ✨ 5. เพิ่มลง debug router
     }
 
     result = {}

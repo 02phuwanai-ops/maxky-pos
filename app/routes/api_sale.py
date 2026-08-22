@@ -21,6 +21,9 @@ from app.database.sales_db import (
     close_current_shift
 )
 
+# ✨ 1. Import ฟังก์ชันจัดการบัญชีเข้ามาใช้งาน
+from app.database.account_db import add_transaction
+
 router = APIRouter()
 
 # =====================================
@@ -110,6 +113,18 @@ def api_sell(data: SellRequest):
                     "success": False,
                     "message": "❌ ไม่สามารถบันทึกรายการขายได้"
                 }
+
+            # ✨ 2. บันทึกรายรับลงบัญชีร้านค้า (scope='work') ทันทีเมื่อขายสำเร็จ 1 รายการ
+            try:
+                add_transaction(
+                    title=f"ขาย {category} ({size}) - {payment_method}",
+                    trans_type="income",
+                    amount=float(final_price),
+                    category="ขายสินค้า",
+                    scope="work"
+                )
+            except Exception as e:
+                print(f"Error sync POS to Account DB: {e}")
 
             processed_items.append({
                 "sale_id": sale_id,
@@ -205,7 +220,9 @@ def undo_sale(data: Optional[ShiftRequest] = None):
             "revenue": shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
         }
 
+    # ข้อมูลจาก last_sale: [sale_id, category, size, price]
     sale_id, category, size = last[0], last[1], last[2]
+    price = last[3] if len(last) > 3 else 0.0
 
     stock_ok = increase_stock(category, size)
     if not stock_ok:
@@ -221,6 +238,19 @@ def undo_sale(data: Optional[ShiftRequest] = None):
             "success": False,
             "message": "❌ ไม่สามารถลบรายการขายได้"
         }
+
+    # ✨ 3. บันทึกรายการหักลบรายรับในบัญชี เมื่อมีการ Undo / ยกเลิกรายการขาย
+    try:
+        if price > 0:
+            add_transaction(
+                title=f"ยกเลิกรายการ {category} ({size})",
+                trans_type="expense",
+                amount=float(price),
+                category="ยกเลิกการขาย",
+                scope="work"
+            )
+    except Exception as e:
+        print(f"Error sync Undo to Account DB: {e}")
 
     try:
         shift_summary = get_shift_sales_summary(station_name, event_name)

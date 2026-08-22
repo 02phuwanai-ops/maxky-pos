@@ -9,31 +9,141 @@ def init_account_db():
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
-            type TEXT NOT NULL, -- 'income' (รายรับ) หรือ 'expense' (รายจ่าย)
+            type TEXT NOT NULL,
             amount REAL NOT NULL,
             category TEXT DEFAULT 'ทั่วไป',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            scope TEXT DEFAULT 'personal',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_cleared INTEGER DEFAULT 0
         )
     """)
     conn.commit()
     conn.close()
 
-def add_transaction(title: str, trans_type: str, amount: float, category: str = "ทั่วไป"):
+def add_transaction(title: str, trans_type: str, amount: float, category: str, scope: str = "personal"):
     init_account_db()
     conn = sqlite3.connect(ACCOUNT_DB)
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO transactions (title, type, amount, category)
-        VALUES (?, ?, ?, ?)
-    """, (title, trans_type, amount, category))
+        INSERT INTO transactions (title, type, amount, category, scope, is_cleared)
+        VALUES (?, ?, ?, ?, ?, 0)
+    """, (title, trans_type, amount, category, scope))
     conn.commit()
     conn.close()
 
-def get_transactions():
+def delete_transaction(trans_id: int):
     init_account_db()
     conn = sqlite3.connect(ACCOUNT_DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, title, type, amount, category, created_at FROM transactions ORDER BY id DESC LIMIT 50")
-    rows = cursor.fetchall()
+    cursor.execute("DELETE FROM transactions WHERE id = ?", (trans_id,))
+    conn.commit()
     conn.close()
-    return rows
+
+def update_transaction(trans_id: int, title: str, trans_type: str, amount: float, category: str, scope: str = "personal"):
+    init_account_db()
+    conn = sqlite3.connect(ACCOUNT_DB)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE transactions 
+        SET title = ?, type = ?, amount = ?, category = ?, scope = ?
+        WHERE id = ?
+    """, (title, trans_type, amount, category, scope, trans_id))
+    conn.commit()
+    conn.close()
+
+def get_account_summary(selected_scope: str = "all"):
+    init_account_db()
+    conn = sqlite3.connect(ACCOUNT_DB)
+    cursor = conn.cursor()
+    
+    # กำหนดเงื่อนไขการกรอง Scope และซ่อนรายการที่เคลียร์ไปแล้ว
+    if selected_scope == "work":
+        where_clause = " WHERE scope = 'work' AND (is_cleared IS NULL OR is_cleared = 0)"
+    elif selected_scope == "personal":
+        where_clause = " WHERE scope = 'personal'"
+    else:
+        where_clause = " WHERE (is_cleared IS NULL OR is_cleared = 0)"
+
+    # 1. รายรับรวม
+    cursor.execute(f"SELECT IFNULL(SUM(amount), 0) FROM transactions{where_clause} AND type = 'income'")
+    income = cursor.fetchone()[0]
+    
+    # 2. รายจ่ายรวม
+    cursor.execute(f"SELECT IFNULL(SUM(amount), 0) FROM transactions{where_clause} AND type = 'expense'")
+    expense = cursor.fetchone()[0]
+    
+    # 3. ตารางประวัติรายการล่าสุด
+    cursor.execute(f"SELECT id, title, type, amount, category, created_at, scope FROM transactions{where_clause} ORDER BY id DESC LIMIT 20")
+    rows = cursor.fetchall()
+    
+    # 4. กราฟสัดส่วนรายจ่าย
+    cursor.execute(f"SELECT category, SUM(amount) FROM transactions{where_clause} AND type = 'expense' GROUP BY category")
+    cat_rows = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "income": income,
+        "expense": expense,
+        "balance": income - expense,
+        "transactions": rows,
+        "chart_labels": [r[0] for r in cat_rows],
+        "chart_data": [r[1] for r in cat_rows],
+        "selected_scope": selected_scope
+    }
+
+def get_work_income_summary():
+    """ดึงยอดกล่องสีเขียวรอบปัจจุบัน (ข้ามรายการที่เป็นบรรทัดสรุปจบงาน)"""
+    init_account_db()
+    conn = sqlite3.connect(ACCOUNT_DB)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT IFNULL(SUM(amount), 0) 
+        FROM transactions 
+        WHERE type = 'income' 
+          AND scope = 'work' 
+          AND (is_cleared IS NULL OR is_cleared = 0)
+          AND title NOT LIKE 'สรุปยอดจบงาน%'
+    """)
+    total_work_income = cursor.fetchone()[0]
+    conn.close()
+    return total_work_income
+
+def clear_work_income():
+    """เคลียร์ยอดรอบปัจจุบัน"""
+    init_account_db()
+    conn = sqlite3.connect(ACCOUNT_DB)
+    cursor = conn.cursor()
+    
+    # 1. คำนวณยอดขายย่อยปัจจุบัน (ไม่รวมบรรทัดสรุปเก่า)
+    cursor.execute("""
+        SELECT IFNULL(SUM(amount), 0) 
+        FROM transactions 
+        WHERE type = 'income' 
+          AND scope = 'work' 
+          AND (is_cleared IS NULL OR is_cleared = 0)
+          AND title NOT LIKE 'สรุปยอดจบงาน%'
+    """)
+    total_income = cursor.fetchone()[0]
+    
+    if total_income > 0:
+        # 2. มาร์กรายการย่อยเดิมว่าเคลียร์แล้ว
+        cursor.execute("""
+            UPDATE transactions 
+            SET is_cleared = 1 
+            WHERE type = 'income' 
+              AND scope = 'work' 
+              AND (is_cleared IS NULL OR is_cleared = 0)
+              AND title NOT LIKE 'สรุปยอดจบงาน%'
+        """)
+        
+        # 3. บันทึกบรรทัดสรุปจบงาน
+        summary_title = f"สรุปยอดจบงาน / เคลียร์ยอดรายรับ (รวม ฿{total_income:,.2f})"
+        cursor.execute("""
+            INSERT INTO transactions (title, type, amount, category, scope, is_cleared)
+            VALUES (?, 'income', ?, 'ขายสินค้า', 'work', 0)
+        """, (summary_title, total_income))
+        
+        conn.commit()
+    
+    conn.close()
