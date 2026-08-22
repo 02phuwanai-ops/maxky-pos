@@ -75,7 +75,7 @@
 /* ปุ่มรีเซ็ตยอดขาย */
 .reset-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center; /* จัดตำแหน่งกรอบให้อยู่กลาง */
     margin: 12px 0 24px;
 }
 
@@ -91,6 +91,8 @@
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center; /* 👈 เพิ่มบรรทัดนี้เพื่อดึงตัวหนังสือมาตรงกลาง */
+    width: 100%;             /* 👈 เพิ่มบรรทัดนี้เพื่อให้ตัวหนังสืออยู่กลางปุ่มยาว */
     gap: 6px;
 }
 

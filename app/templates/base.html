@@ -10,142 +10,174 @@
 
 <link rel="stylesheet" href="/static/css/style.css">
 <link rel="manifest" href="/static/manifest.json">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#0f172a">
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-    font-family:Arial,sans-serif;
-    background:#f4f4f4;
+body {
+    font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: #f8fafc;
 }
 
 /* =========================================
-   MAXKY POS Header
+   MAXKY POS Header (Modern Glass Bar)
 ========================================= */
 
-.header{
-    background:#111;
-    color:white;
-    padding:16px 20px;
+.header {
+    background: #0f172a; /* สีเทาดำพรีเมียม */
+    color: white;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 /* กล่องด้านใน */
-.header-inner{
-    max-width:1180px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
+.header-inner {
+    max-width: 1180px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 }
 
 /* ชื่อระบบ */
-.header-brand{
-    font-size:28px;
-    font-weight:bold;
-    white-space:nowrap;
+.header-brand {
+    font-size: 22px;
+    font-weight: 800;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.5px;
+}
+
+.brand-accent {
+    color: #38bdf8; /* แซมสีฟ้าสดใส */
 }
 
 /* รายได้ด้านขวา & แถบสถานะ */
-.header-revenue{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    white-space:nowrap;
+.header-revenue {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
 }
 
+/* ป้ายสถานะเน็ต */
 .network-badge {
     font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-weight: bold;
-    margin-right: 6px;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
 }
 
 .status-online {
-    background: #22c55e;
-    color: white;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
 }
 
 .status-offline {
-    background: #ef4444;
-    color: white;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
 }
 
-/* ข้อความรายได้วันนี้ */
-.header-revenue-label{
-    font-size:13px;
-    color:#a1a1aa;
+/* กล่องแคปซูลแสดงรายได้ (เน้นเด่นชัด) */
+.revenue-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 14px;
+    border-radius: 50px;
+    backdrop-filter: blur(8px);
 }
 
-/* ตัวเลข */
-.header-revenue-value{
-    font-size:22px;
-    font-weight:bold;
-    color:#86efac;
+.header-revenue-label {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* ตัวเลขยอดขายแบบไฮไลท์ */
+.header-revenue-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4ade80; /* สีเขียวนีออน สว่างสะดุดตา */
+    letter-spacing: -0.5px;
 }
 
 /* หน่วยบาท */
-.header-revenue-unit{
-    font-size:13px;
-    color:#d1d5db;
+.header-revenue-unit {
+    font-size: 12px;
+    color: #cbd5e1;
+    font-weight: 600;
 }
 
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:20px;
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
 }
 
-.card{
-    background:white;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 3px 12px rgba(0,0,0,.15);
+.card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
 }
 
 /* =========================================
    Mobile Optimization
 ========================================= */
 
-@media(max-width:700px){
-
-    .header{
-        padding:12px 14px;
+@media(max-width:700px) {
+    .header {
+        padding: 10px 14px;
     }
 
-    .header-inner{
-        gap:10px;
+    .header-inner {
+        gap: 8px;
     }
 
-    .header-brand{
-        font-size:20px;
+    .header-brand {
+        font-size: 18px;
     }
 
-    .header-revenue{
-        gap:5px;
+    .revenue-pill {
+        padding: 4px 10px;
     }
 
-    .header-revenue-label{
-        display:none;
+    .header-revenue-label {
+        display: none; /* ซ่อนข้อความในจอมือถือเพื่อไม่ให้แน่น */
     }
 
-    .header-revenue-value{
-        font-size:18px;
+    .header-revenue-value {
+        font-size: 17px;
     }
 
-    .header-revenue-unit{
-        font-size:12px;
+    .header-revenue-unit {
+        font-size: 11px;
     }
 
-    .container{
-        padding:14px;
+    .container {
+        padding: 14px;
     }
 }
 
@@ -165,14 +197,12 @@ body{
 <script>
 // 5. เช็กการเชื่อมต่อเน็ตแบบชัวร์ 100% (แก้ปัญหา Method HEAD โดน Block)
 async function checkRealOnlineStatus() {
-    // ถ้าเบราว์เซอร์บอกว่าไม่มีเน็ต -> Offline แน่นอน 100%
     if (!navigator.onLine) return false;
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2500); // รอไม่เกิน 2.5 วินาที
+        const timeoutId = setTimeout(() => controller.abort(), 2500); 
         
-        // ใช้ GET ยิงไปหา API ดึงข้อมูลสั้นๆ ที่มีอยู่แล้ว
         const response = await fetch('/api/recent-sales?check=' + Date.now(), { 
             method: 'GET',
             cache: 'no-store',
@@ -181,7 +211,6 @@ async function checkRealOnlineStatus() {
         clearTimeout(timeoutId);
         return response.ok;
     } catch (e) {
-        // ถ้ายิงแล้ว Error หรือ Timeout แสดงว่าไม่มีเน็ตจริง
         return false;
     }
 }
@@ -191,20 +220,18 @@ async function updateNetworkStatus() {
     const statusBadge = document.getElementById('networkStatus');
     if (!statusBadge) return;
 
-    // ถ้าเบราว์เซอร์ตัดเน็ต ให้เปลี่ยนเป็น Offline ทันที ไม่ต้องรอ Ping
     if (!navigator.onLine) {
         statusBadge.className = 'network-badge status-offline';
         statusBadge.innerText = '🔴 Offline';
         return;
     }
 
-    // ถ้าเบราว์เซอร์บอกว่ามีเน็ต ค่อยลอง Ping เช็กอีกที
     const isOnline = await checkRealOnlineStatus();
 
     if (isOnline) {
         statusBadge.className = 'network-badge status-online';
         statusBadge.innerText = '🟢 Online';
-        syncOfflineData();
+        if (typeof syncOfflineData === 'function') syncOfflineData();
     } else {
         statusBadge.className = 'network-badge status-offline';
         statusBadge.innerText = '🔴 Offline';
@@ -219,10 +246,11 @@ async function updateNetworkStatus() {
 <div class="header">
     <div class="header-inner">
 
-        <!-- MAXKY POS -->
+        <!-- MAXKY POS Brand Logo -->
         <a href="/" style="text-decoration: none; color: inherit; cursor: pointer;">
             <div class="header-brand">
-                👕 MAXKY POS
+                <span>👕</span>
+                <span>MAXKY <span class="brand-accent">POS</span></span>
             </div>
         </a>
 
@@ -230,20 +258,12 @@ async function updateNetworkStatus() {
         <div class="header-revenue">
             <span id="networkStatus" class="network-badge status-online">🟢 Online</span>
 
-            <span class="header-revenue-label">
-                💰 รายได้วันนี้
-            </span>
-
-            <strong
-                id="headerRevenue"
-                class="header-revenue-value"
-            >
-                0
-            </strong>
-
-            <span class="header-revenue-unit">
-                บาท
-            </span>
+            <!-- กล่องแคปซูลยอดขายแบบไฮไลต์ -->
+            <div class="revenue-pill">
+                <span class="header-revenue-label">💰 รายได้วันนี้</span>
+                <strong id="headerRevenue" class="header-revenue-value">0</strong>
+                <span class="header-revenue-unit">บาท</span>
+            </div>
         </div>
 
     </div>
@@ -253,6 +273,7 @@ async function updateNetworkStatus() {
 {% block content %}
 {% endblock %}
 </div>
+
 <!-- 🔊 สคริปต์เพิ่มเสียงปิ๊บและระบบสั่นเมื่อกดปุ่ม -->
 <script>
 // 1. ฟังก์ชันสร้างเสียง Beep สั้นๆ
@@ -262,12 +283,11 @@ function playClickSound() {
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
-        oscillator.type = 'sine'; // เสียงนุ่มนวล
-        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // ความถี่เสียง (800Hz)
+        oscillator.type = 'sine'; 
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
 
-        // ปรับความดังให้ค่อยๆ เบาลงอย่างรวดเร็ว (ลดเสียงเป๊ก/แปก)
-        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); // ความดัง 15%
-        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.08); // เล่นยาว 0.08 วินาที
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); 
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.08); 
 
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
@@ -275,24 +295,22 @@ function playClickSound() {
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.08);
     } catch (e) {
-        // บางเบราว์เซอร์อาจจะบล็อก Audio ถ้ายังไม่มี User Interaction
     }
 }
 
 // 2. ฟังก์ชันสั่งให้สั่น (เฉพาะมือถือ)
 function triggerVibrate() {
     if ("vibrate" in navigator) {
-        navigator.vibrate(30); // สั่นสั้นๆ 30 มิลลิวินาที
+        navigator.vibrate(30); 
     }
 }
 
 // 3. ดักจับการกดปุ่ม ปุ่มลิงก์ หรือ Card ทุกตัวในหน้าเว็บ
 document.addEventListener("click", function(event) {
-    // เช็กว่า Element ที่กดเป็น button, a, .btn, .card หรือลูกๆ ของมันหรือไม่
     const target = event.target.closest("button, a, .btn, .card, select, input[type='submit'], input[type='button']");
     if (target) {
-        playClickSound();  // ส่งเสียง
-        triggerVibrate();  // สั่งสั่น
+        playClickSound();  
+        triggerVibrate();  
     }
 });
 </script>
