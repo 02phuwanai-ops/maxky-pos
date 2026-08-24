@@ -1,5 +1,5 @@
 import io
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -15,6 +15,8 @@ from app.database.account_db import (
     update_transaction,
 )
 
+tz_thai = timezone(timedelta(hours=7))
+
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
 
@@ -27,7 +29,7 @@ def account_page(
     end_date: Optional[str] = Query(None),
     selected_month: Optional[str] = Query(None),
 ):
-    current_time = datetime.now()
+    current_time = datetime.now(tz_thai)
     
     # กำหนดค่าเดือนเริ่มต้น (ฟอร์แมต YYYY-MM เช่น "2026-08")
     if not selected_month:
@@ -111,7 +113,7 @@ def export_excel(
         df.to_excel(writer, index=False, sheet_name="Summary_Report")
     output.seek(0)
 
-    filename = f"account_report_{scope}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    filename = f"account_report_{scope}_{datetime.now(tz_thai).strftime('%Y%m%d_%H%M')}.xlsx"  # 👈 ใส่ tz_thai
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
 
     return StreamingResponse(
