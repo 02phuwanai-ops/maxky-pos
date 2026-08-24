@@ -418,16 +418,16 @@
 </div>
 
 <script>
-function editProductName(productId){
+function editProductName(productId) {
     const form = document.getElementById("edit-product-" + productId);
-    if(!form) return;
+    if (!form) return;
 
-    if(form.style.display === "flex"){
+    if (form.style.display === "flex") {
         form.style.display = "none";
     } else {
         form.style.display = "flex";
         const input = form.querySelector('input[name="category"]');
-        if(input){
+        if (input) {
             input.focus();
             input.select();
         }

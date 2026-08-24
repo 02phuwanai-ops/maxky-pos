@@ -939,7 +939,7 @@ body {
             <div class="header-actions">
                 <div class="event-box-inline">
                     <span class="event-label">📍 จุดขาย:</span>
-                    <select id="stationSelect" class="station-select" onchange="loadRecentSales()">
+                    <select id="stationSelect" class="station-select" onchange="onStationChange()">
                         <option value="จุดขายที่ 1">จุดขายที่ 1</option>
                         <option value="จุดขายที่ 2">จุดขายที่ 2</option>
                         <option value="จุดขายที่ 3">จุดขายที่ 3</option>
@@ -988,8 +988,10 @@ body {
                 <button
                     class="size-button"
                     id="btn-{{ product.name }}-{{ size }}"
-                    data-price="{{ product.price }}"
-                    onclick="addToCart('{{ product.name }}', '{{ size }}', {{ product.price | default(0) }})"
+                    data-name="{{ product.name }}"
+                    data-size="{{ size }}"
+                    data-price="{{ product.price | default(0) }}"
+                    onclick="handleAddToCart(this)"
                 >
                     {{ size }}
                 </button>
@@ -1697,6 +1699,15 @@ function shareToLine() {
 
     const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(message)}`;
     window.open(lineUrl, '_blank');
+}
+
+function handleAddToCart(btn) {
+    const name = btn.getAttribute('data-name');
+    const size = btn.getAttribute('data-size');
+    const price = parseFloat(btn.getAttribute('data-price')) || 0;
+    
+    // เรียกฟังก์ชัน addToCart เดิม
+    addToCart(name, size, price);
 }
 </script>
 

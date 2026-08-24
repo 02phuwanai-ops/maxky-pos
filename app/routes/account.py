@@ -1,5 +1,6 @@
 import io
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Optional
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -20,6 +21,7 @@ router = APIRouter()
 
 
 @router.get("/account", response_class=HTMLResponse)
+@router.get("/account", response_class=HTMLResponse)
 def account_page(
     request: Request,
     scope: str = Query("all"),
@@ -27,18 +29,23 @@ def account_page(
     end_date: Optional[str] = Query(None),
     selected_month: Optional[str] = Query(None),
 ):
-    current_time = datetime.now()
+    # --- [แก้ไขจุดที่ 2] ดึงเวลาปัจจุบันที่เป็น เวลาไทย (UTC+7) ---
+    tz = ZoneInfo("Asia/Bangkok")
+    current_time = datetime.now(tz)
     
     # กำหนดค่าเดือนเริ่มต้น (ฟอร์แมต YYYY-MM เช่น "2026-08")
     if not selected_month:
         selected_month = current_time.strftime("%Y-%m")
 
     # หากเลือกหมวดชีวิตประจำวัน (personal) และไม่ได้กรองวันที่แบบกำหนดเอง
-    # จะตัดยอดรายวันให้อัตโนมัติ (เฉพาะวันนี้)
+    # จะตัดยอดรายวันให้อัตโนมัติ (เที่ยงคืน 00:00:00 ถึง 23:59:59 ของวันนี้)
     if scope == "personal" and not start_date and not end_date:
         today_str = current_time.strftime("%Y-%m-%d")
+        # ส่งช่วงเวลาเต็มวัน 00:00:00 ถึง 23:59:59 เพื่อให้ตัดรอบตรงเที่ยงคืนพอดี
         summary = get_account_summary(
-            selected_scope="personal", start_date=today_str, end_date=today_str
+            selected_scope="personal", 
+            start_date=f"{today_str} 00:00:00", 
+            end_date=f"{today_str} 23:59:59"
         )
     else:
         summary = get_account_summary(
