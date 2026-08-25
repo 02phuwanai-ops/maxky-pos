@@ -1,4 +1,8 @@
 import sqlite3
+from datetime import datetime, timezone, timedelta
+
+# 🇹🇭 กำหนด Timezone ประเทศไทย (UTC+7)
+tz_thai = timezone(timedelta(hours=7))
 
 ACCOUNT_DB = "data/account.db"
 
@@ -24,10 +28,14 @@ def add_transaction(title: str, trans_type: str, amount: float, category: str, s
     init_account_db()
     conn = sqlite3.connect(ACCOUNT_DB)
     cursor = conn.cursor()
+    
+    # 👈 สร้างเวลาไทยปัจจุบันแบบชัดเจน (ส่งไปแทนที่ CURRENT_TIMESTAMP ของ SQLite)
+    now_thai = datetime.now(tz_thai).strftime("%Y-%m-%d %H:%M:%S")
+
     cursor.execute("""
-        INSERT INTO transactions (title, type, amount, category, scope, is_cleared)
-        VALUES (?, ?, ?, ?, ?, 0)
-    """, (title, trans_type, amount, category, scope))
+        INSERT INTO transactions (title, type, amount, category, scope, created_at, is_cleared)
+        VALUES (?, ?, ?, ?, ?, ?, 0)
+    """, (title, trans_type, amount, category, scope, now_thai))
     conn.commit()
     conn.close()
 
@@ -143,12 +151,13 @@ def clear_work_income():
               AND title NOT LIKE 'สรุปยอดจบงาน%'
         """)
         
-        # 3. บันทึกบรรทัดสรุปจบงาน
+        # 3. บันทึกบรรทัดสรุปจบงาน (ใส่เวลาไทย)
+        now_thai = datetime.now(tz_thai).strftime("%Y-%m-%d %H:%M:%S")
         summary_title = f"สรุปยอดจบงาน / เคลียร์ยอดรายรับ (รวม ฿{total_income:,.2f})"
         cursor.execute("""
-            INSERT INTO transactions (title, type, amount, category, scope, is_cleared)
-            VALUES (?, 'income', ?, 'ขายสินค้า', 'work', 0)
-        """, (summary_title, total_income))
+            INSERT INTO transactions (title, type, amount, category, scope, created_at, is_cleared)
+            VALUES (?, 'income', ?, 'ขายสินค้า', 'work', ?, 0)
+        """, (summary_title, total_income, now_thai))
         
         conn.commit()
     
