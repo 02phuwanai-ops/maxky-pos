@@ -1,37 +1,26 @@
-import sqlite3
-
-# ชี้ไปที่ไฟล์ DB เดิมของคุณ
-DB_NAME = "data/maxky_pos.db"
+import pymysql
+from datetime import datetime
+from app.database.db import get_db_connection
 
 
 def init_db():
-    """ตรวจสอบและเพิ่มคอลัมน์ payment_method และ station_name ในตาราง sales อัตโนมัติ"""
-    conn = sqlite3.connect(DB_NAME)
+    """ตรวจสอบและเพิ่มคอลัมน์ในตาราง sales อัตโนมัติ หากยังไม่มี"""
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    try:
-        cursor.execute(
-            "ALTER TABLE sales ADD COLUMN payment_method TEXT DEFAULT 'เงินสด'"
-        )
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass
+    columns_to_add = [
+        ("payment_method", "VARCHAR(100) DEFAULT 'เงินสด'"),
+        ("station_name", "VARCHAR(100) DEFAULT 'จุดขายที่ 1'"),
+        ("event_name", "VARCHAR(100) DEFAULT ''")
+    ]
 
-    try:
-        cursor.execute(
-            "ALTER TABLE sales ADD COLUMN station_name TEXT DEFAULT 'จุดขายที่ 1'"
-        )
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute(
-            "ALTER TABLE sales ADD COLUMN event_name TEXT DEFAULT ''"
-        )
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass
+    for col_name, col_def in columns_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE sales ADD COLUMN {col_name} {col_def}")
+            conn.commit()
+        except Exception:
+            # หากคอลัมน์มีอยู่แล้ว MySQL จะข้ามโดยไม่เกิด Error พัง
+            pass
 
     conn.close()
 
@@ -39,7 +28,7 @@ def init_db():
 def get_recent_sales(station_name: str = "จุดขายที่ 1", event_name: str = None):
     init_db()
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     station = station_name if station_name else "จุดขายที่ 1"
@@ -53,21 +42,21 @@ def get_recent_sales(station_name: str = "จุดขายที่ 1", event_
             SELECT
                 created_at, category, size, price, event_name, payment_method, station_name
             FROM sales
-            WHERE (station_name = ? OR station_name IS NULL OR station_name = '')
-              AND event_name = ?
+            WHERE (station_name = %s OR station_name IS NULL OR station_name = '')
+              AND event_name = %s
             ORDER BY id DESC
             LIMIT 10
         """
         cursor.execute(query, (station, clean_event))
         rows = cursor.fetchall()
 
-    # 2. ถ้าค้นด้วยชื่องานแล้วไม่พบข้อมูล (หรือไม่ได้ใส่ชื่องาน) ให้ดึงรายการขายล่าสุดทั้งหมดของจุดขายนั้นขึ้นมาแสดงทันที
+    # 2. ถ้าค้นด้วยชื่องานแล้วไม่พบข้อมูล ให้ดึงรายการขายล่าสุดทั้งหมดของจุดขายนั้นขึ้นมาแสดงทันที
     if not clean_event or not rows:
         query = """
             SELECT
                 created_at, category, size, price, event_name, payment_method, station_name
             FROM sales
-            WHERE (station_name = ? OR station_name IS NULL OR station_name = '')
+            WHERE (station_name = %s OR station_name IS NULL OR station_name = '')
             ORDER BY id DESC
             LIMIT 10
         """
@@ -78,22 +67,36 @@ def get_recent_sales(station_name: str = "จุดขายที่ 1", event_
 
     data = []
     for row in rows:
-        created_at = row[0]
-        category = row[1]
-        size = row[2]
-        price = row[3]
-        row_event = row[4] or ""
-        payment_method = row[5] if len(row) > 5 and row[5] else "เงินสด"
-        row_station = row[6] if len(row) > 6 and row[6] else "จุดขายที่ 1"
+        # รองรับทั้ง DictCursor และ Normal Tuple
+        if isinstance(row, dict):
+            created_at = row.get("created_at")
+            category = row.get("category")
+            size = row.get("size")
+            price = float(row.get("price", 0.0)) if row.get("price") is not None else 0.0
+            row_event = row.get("event_name") or ""
+            payment_method = row.get("payment_method") or "เงินสด"
+            row_station = row.get("station_name") or "จุดขายที่ 1"
+        else:
+            created_at = row[0]
+            category = row[1]
+            size = row[2]
+            price = float(row[3]) if row[3] is not None else 0.0
+            row_event = row[4] or ""
+            payment_method = row[5] if len(row) > 5 and row[5] else "เงินสด"
+            row_station = row[6] if len(row) > 6 and row[6] else "จุดขายที่ 1"
 
         # แปลงฟอร์แมตวันที่
-        try:
-            date_part, time_part = created_at.split(" ")
-            year, month, day = date_part.split("-")
-            hour, minute, second = time_part.split(":")
-            display_time = f"{day}/{month}/{year} {hour}:{minute}"
-        except Exception:
-            display_time = created_at
+        if isinstance(created_at, datetime):
+            display_time = created_at.strftime("%d/%m/%Y %H:%M")
+        else:
+            try:
+                created_str = str(created_at)
+                date_part, time_part = created_str.split(" ")
+                year, month, day = date_part.split("-")
+                hour, minute = time_part.split(":")[:2]
+                display_time = f"{day}/{month}/{year} {hour}:{minute}"
+            except Exception:
+                display_time = str(created_at)
 
         data.append(
             {

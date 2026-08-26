@@ -1,7 +1,5 @@
-import sqlite3
-
-
-DB_NAME = "data/maxky_pos.db"
+import pymysql
+from app.database.db import get_db_connection
 
 
 # ==========================================
@@ -9,57 +7,31 @@ DB_NAME = "data/maxky_pos.db"
 # ==========================================
 
 def create_product_table():
-
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # --------------------------------------
     # Products
-    # --------------------------------------
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS products (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            category TEXT UNIQUE
-
-        )
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category VARCHAR(255) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """)
 
-    # --------------------------------------
     # Product Prices By Size
-    # --------------------------------------
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS product_prices (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            product_id INTEGER NOT NULL,
-
-            size TEXT NOT NULL,
-
-            cost REAL DEFAULT 0,
-
-            price REAL DEFAULT 0,
-
-            FOREIGN KEY(product_id)
-            REFERENCES products(id)
-
-        )
-    """)
-
-    # ป้องกันสินค้าเดียวกันมีราคาไซส์เดียวกันซ้ำ
-    cursor.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS
-        idx_product_size
-        ON product_prices(product_id, size)
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT NOT NULL,
+            size VARCHAR(50) NOT NULL,
+            cost DECIMAL(10,2) DEFAULT 0.00,
+            price DECIMAL(10,2) DEFAULT 0.00,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            UNIQUE KEY idx_product_size (product_id, size)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """)
 
     conn.commit()
-
     conn.close()
 
 
@@ -68,26 +40,20 @@ def create_product_table():
 # ==========================================
 
 def add_product(category):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         INSERT INTO products(category)
-
-        VALUES(?)
+        VALUES(%s)
         """,
-        (
-            category,
-        )
+        (category,)
     )
 
     conn.commit()
-
     product_id = cursor.lastrowid
-
     conn.close()
 
     return product_id
@@ -97,29 +63,20 @@ def add_product(category):
 # เพิ่มราคาแต่ละไซส์
 # ==========================================
 
-def add_product_price(
-    product_id,
-    size,
-    cost,
-    price
-):
-
-    conn = sqlite3.connect(DB_NAME)
-
+def add_product_price(product_id, size, cost, price):
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         INSERT INTO product_prices(
-
             product_id,
             size,
             cost,
             price
-
         )
-
-        VALUES(?,?,?,?)
+        VALUES(%s, %s, %s, %s)
         """,
         (
             product_id,
@@ -130,7 +87,6 @@ def add_product_price(
     )
 
     conn.commit()
-
     conn.close()
 
 
@@ -139,25 +95,24 @@ def add_product_price(
 # ==========================================
 
 def get_products():
-
-    conn = sqlite3.connect(DB_NAME)
-
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT
-
             id,
             category
-
         FROM products
-
         ORDER BY category
     """)
 
     rows = cursor.fetchall()
-
     conn.close()
+
+    # คืนค่ารองรับทั้ง Tuple และ Dict Cursor
+    if rows and isinstance(rows[0], dict):
+        return [(r["id"], r["category"]) for r in rows]
 
     return rows
 
@@ -167,24 +122,19 @@ def get_products():
 # ==========================================
 
 def get_product_sizes(product_id):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         SELECT
-
             id,
             size,
             cost,
             price
-
         FROM product_prices
-
-        WHERE product_id=?
-
+        WHERE product_id = %s
         ORDER BY
             CASE size
                 WHEN 'S' THEN 1
@@ -196,30 +146,25 @@ def get_product_sizes(product_id):
                 ELSE 99
             END
         """,
-        (
-            product_id,
-        )
+        (product_id,)
     )
 
     rows = cursor.fetchall()
-
     conn.close()
+
+    if rows and isinstance(rows[0], dict):
+        return [(r["id"], r["size"], float(r["cost"]), float(r["price"])) for r in rows]
 
     return rows
 
 
 # ==========================================
-# ใช้ตอนขาย
-# ราคาแยกตามสินค้า + ไซส์
+# ใช้ตอนขาย (ราคาแยกตามสินค้า + ไซส์)
 # ==========================================
 
-def get_product_price(
-    category,
-    size
-):
-
-    conn = sqlite3.connect(DB_NAME)
-
+def get_product_price(category, size):
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -227,70 +172,50 @@ def get_product_price(
         SELECT
             pp.cost,
             pp.price
-
         FROM products p
-
         INNER JOIN product_prices pp
             ON p.id = pp.product_id
-
         WHERE
-            TRIM(p.category) = TRIM(?)
-
+            TRIM(p.category) = TRIM(%s)
         AND
-            TRIM(pp.size) = TRIM(?)
-
+            TRIM(pp.size) = TRIM(%s)
         LIMIT 1
         """,
-        (
-            category,
-            size
-        )
+        (category, size)
     )
 
     row = cursor.fetchone()
-
     conn.close()
 
-    return row
+    if row:
+        if isinstance(row, dict):
+            return (float(row.get("cost", 0)), float(row.get("price", 0)))
+        return row
+
+    return None
 
 
 # ==========================================
-# แก้ราคา
+# แก้ไขราคาแต่ละไซส์
 # ==========================================
 
-def update_product_price(
-    price_id,
-    cost,
-    price
-):
-
-    conn = sqlite3.connect(DB_NAME)
-
+def update_product_price(price_id, cost, price):
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         UPDATE product_prices
-
         SET
-
-            cost=?,
-
-            price=?
-
-        WHERE id=?
+            cost = %s,
+            price = %s
+        WHERE id = %s
         """,
-        (
-            cost,
-            price,
-            price_id
-        )
+        (cost, price, price_id)
     )
 
     conn.commit()
-
     affected = cursor.rowcount
-
     conn.close()
 
     return affected > 0
@@ -301,42 +226,30 @@ def update_product_price(
 # ==========================================
 
 def delete_product_price(price_id):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         DELETE FROM product_prices
-
-        WHERE id=?
+        WHERE id = %s
         """,
-        (
-            price_id,
-        )
+        (price_id,)
     )
 
     conn.commit()
-
     affected = cursor.rowcount
-
     conn.close()
 
     return affected > 0
 
 
 # ==========================================
-# ลบสินค้า
-#
-# สำคัญ:
-# ลบ Stock ของสินค้าด้วย
+# ลบสินค้า (พร้อมลบ Stock และราคา)
 # ==========================================
 
 def delete_product(product_id):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
@@ -347,32 +260,21 @@ def delete_product(product_id):
 
         cursor.execute(
             """
-            SELECT
-
-                category
-
+            SELECT category
             FROM products
-
-            WHERE id=?
-
+            WHERE id = %s
             LIMIT 1
             """,
-            (
-                product_id,
-            )
+            (product_id,)
         )
 
         row = cursor.fetchone()
 
         if not row:
-
             conn.close()
-
             return False
 
-
-        category = row[0]
-
+        category = row.get("category") if isinstance(row, dict) else row[0]
 
         # ----------------------------------
         # 1. ลบ Stock ของสินค้า
@@ -381,14 +283,10 @@ def delete_product(product_id):
         cursor.execute(
             """
             DELETE FROM stock
-
-            WHERE TRIM(category) = TRIM(?)
+            WHERE TRIM(category) = TRIM(%s)
             """,
-            (
-                category,
-            )
+            (category,)
         )
-
 
         # ----------------------------------
         # 2. ลบราคาของสินค้า
@@ -397,14 +295,10 @@ def delete_product(product_id):
         cursor.execute(
             """
             DELETE FROM product_prices
-
-            WHERE product_id=?
+            WHERE product_id = %s
             """,
-            (
-                product_id,
-            )
+            (product_id,)
         )
-
 
         # ----------------------------------
         # 3. ลบสินค้า
@@ -413,35 +307,22 @@ def delete_product(product_id):
         cursor.execute(
             """
             DELETE FROM products
-
-            WHERE id=?
+            WHERE id = %s
             """,
-            (
-                product_id,
-            )
+            (product_id,)
         )
 
         affected = cursor.rowcount
 
-
         conn.commit()
-
         conn.close()
 
         return affected > 0
 
-
     except Exception as e:
-
         conn.rollback()
-
         conn.close()
-
-        print(
-            "DELETE PRODUCT ERROR:",
-            e
-        )
-
+        print("DELETE PRODUCT ERROR:", e)
         return False
 
 
@@ -450,96 +331,29 @@ def delete_product(product_id):
 # ==========================================
 
 def get_product(category):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    create_product_table()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         SELECT
-
             id,
             category
-
         FROM products
-
-        WHERE category=?
-
+        WHERE category = %s
         LIMIT 1
         """,
-        (
-            category,
-        )
+        (category,)
     )
 
     row = cursor.fetchone()
-
     conn.close()
+
+    if row and isinstance(row, dict):
+        return (row["id"], row["category"])
 
     return row
-
-
-# ==========================================
-# Build 0.86
-# แก้ไขราคาแต่ละไซส์
-# ==========================================
-
-def update_product_price(price_id, cost, price):
-
-    conn = sqlite3.connect(DB_NAME)
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        UPDATE product_prices
-
-        SET
-            cost=?,
-            price=?
-
-        WHERE id=?
-        """,
-        (
-            cost,
-            price,
-            price_id
-        )
-    )
-
-    conn.commit()
-
-    conn.close()
-
-
-# ==========================================
-# Build 0.86
-# ลบราคาเฉพาะไซส์
-# ==========================================
-
-def delete_product_price(price_id):
-
-    conn = sqlite3.connect(DB_NAME)
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        DELETE FROM product_prices
-
-        WHERE id=?
-        """,
-        (price_id,)
-    )
-
-    conn.commit()
-
-    affected = cursor.rowcount
-
-    conn.close()
-
-    return affected > 0
 
 
 # ==========================================
@@ -547,29 +361,20 @@ def delete_product_price(price_id):
 # ==========================================
 
 def update_product_name(product_id, category):
-
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         UPDATE products
-
-        SET category=?
-
-        WHERE id=?
+        SET category = %s
+        WHERE id = %s
         """,
-        (
-            category,
-            product_id
-        )
+        (category, product_id)
     )
 
     conn.commit()
-
     affected = cursor.rowcount
-
     conn.close()
 
     return affected > 0
