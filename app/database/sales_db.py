@@ -1,68 +1,39 @@
-import sqlite3
+import pymysql
 from datetime import datetime
-
-DB_NAME = "data/maxky_pos.db"
+from app.database.db import get_db_connection
 
 
 # ==========================================
-# สร้างตาราง Sales
+# สร้างตาราง Sales & Shifts ใน MySQL
 # ==========================================
 
 def create_sales_table():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS sales(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            size TEXT,
-            cost REAL,
-            price REAL,
-            profit REAL,
-            created_at TEXT,
-            event_name TEXT,
-            payment_method TEXT DEFAULT 'เงินสด',
-            station_name TEXT DEFAULT 'จุดขายที่ 1',
-            shift_id INTEGER,
-            is_closed INTEGER DEFAULT 0
-        )
+        CREATE TABLE IF NOT EXISTS sales (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category VARCHAR(255),
+            size VARCHAR(100),
+            cost DECIMAL(10,2),
+            price DECIMAL(10,2),
+            profit DECIMAL(10,2),
+            created_at DATETIME,
+            event_name VARCHAR(255),
+            payment_method VARCHAR(100) DEFAULT 'เงินสด',
+            station_name VARCHAR(255) DEFAULT 'จุดขายที่ 1',
+            shift_id INT,
+            is_closed INT DEFAULT 0
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """)
-
-    # --------------------------------------
-    # ตรวจสอบฐานข้อมูลเก่า
-    # --------------------------------------
-    cursor.execute("""
-        PRAGMA table_info(sales)
-    """)
-
-    columns = [row[1] for row in cursor.fetchall()]
-
-    if "event_name" not in columns:
-        cursor.execute("""
-            ALTER TABLE sales
-            ADD COLUMN event_name TEXT
-        """)
-
-    if "payment_method" not in columns:
-        cursor.execute("""
-            ALTER TABLE sales
-            ADD COLUMN payment_method TEXT DEFAULT 'เงินสด'
-        """)
-
-    if "station_name" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN station_name TEXT DEFAULT 'จุดขายที่ 1'")
-    if "shift_id" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN shift_id INTEGER")
-    if "is_closed" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN is_closed INTEGER DEFAULT 0")
 
     conn.commit()
     conn.close()
 
 
 # ==========================================
-# เพิ่มรายการขาย (แก้ไขให้บันทึก payment_method ลง DB)
+# เพิ่มรายการขาย
 # ==========================================
 
 def add_sale(
@@ -80,8 +51,10 @@ def add_sale(
     # ดึง shift_id ของกะปัจจุบัน (แยกตาม จุดขาย + ชื่องาน)
     shift_id = get_current_shift(station_name, event_name)
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
+
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cursor.execute(
         """
@@ -99,7 +72,7 @@ def add_sale(
             station_name,
             is_closed
         )
-        VALUES (?,?,?,?,?,?,?,?,?,?,0)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
         """,
         (
             category,
@@ -107,7 +80,7 @@ def add_sale(
             cost,
             price,
             profit,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            now_str,
             event_name,
             payment_method,
             shift_id,
@@ -128,7 +101,7 @@ def add_sale(
 # ==========================================
 
 def today_sales_count():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -137,15 +110,13 @@ def today_sales_count():
         """
         SELECT COUNT(*)
         FROM sales
-        WHERE (DATE(created_at) = DATE(?) OR created_at LIKE ?) AND is_closed = 0
+        WHERE DATE(created_at) = %s AND is_closed = 0
         """,
-        (
-            today,
-            today + "%"
-        )
+        (today,)
     )
 
-    result = cursor.fetchone()[0] or 0
+    row = cursor.fetchone()
+    result = row[0] if row and row[0] is not None else 0
 
     conn.close()
 
@@ -157,7 +128,7 @@ def today_sales_count():
 # ==========================================
 
 def today_sales_revenue():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -166,15 +137,13 @@ def today_sales_revenue():
         """
         SELECT COALESCE(SUM(price), 0)
         FROM sales
-        WHERE (DATE(created_at) = DATE(?) OR created_at LIKE ?) AND is_closed = 0
+        WHERE DATE(created_at) = %s AND is_closed = 0
         """,
-        (
-            today,
-            today + "%"
-        )
+        (today,)
     )
 
-    result = cursor.fetchone()[0] or 0
+    row = cursor.fetchone()
+    result = float(row[0]) if row and row[0] is not None else 0.0
 
     conn.close()
 
@@ -188,11 +157,9 @@ def today_sales_revenue():
 def get_last_sale(station_name="จุดขายที่ 1", event_name=""):
     event_name = event_name.strip() if event_name else ""
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 💡 ปรับปรุง SQL: ดึงรายการขายล่าสุดของ station นี้ ที่ยังไม่ปิดยอด (is_closed = 0)
-    # ตัดเงื่อนไข shift_id ออก เพื่อป้องกันปัญหา Shift ID ไม่ตรงกัน
     cursor.execute(
         """
         SELECT
@@ -200,7 +167,7 @@ def get_last_sale(station_name="จุดขายที่ 1", event_name=""):
             category,
             size
         FROM sales
-        WHERE station_name = ? AND is_closed = 0
+        WHERE station_name = %s AND is_closed = 0
         ORDER BY id DESC
         LIMIT 1
         """,
@@ -212,22 +179,21 @@ def get_last_sale(station_name="จุดขายที่ 1", event_name=""):
 
     return row
 
+
 # ==========================================
 # ลบ Sale ตาม ID
 # ==========================================
 
 def delete_sale(sale_id):
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
         """
         DELETE FROM sales
-        WHERE id = ?
+        WHERE id = %s
         """,
-        (
-            sale_id,
-        )
+        (sale_id,)
     )
 
     deleted = cursor.rowcount
@@ -243,7 +209,7 @@ def delete_sale(sale_id):
 # ==========================================
 
 def get_sales_debug():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -263,34 +229,9 @@ def get_sales_debug():
     )
 
     rows = cursor.fetchall()
-
     conn.close()
 
     return rows
-
-
-# ==========================================
-# เพิ่มช่องชื่องานใน Sales
-# ==========================================
-
-def add_event_name_column():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        PRAGMA table_info(sales)
-    """)
-
-    columns = [row[1] for row in cursor.fetchall()]
-
-    if "event_name" not in columns:
-        cursor.execute("""
-            ALTER TABLE sales
-            ADD COLUMN event_name TEXT
-        """)
-        conn.commit()
-
-    conn.close()
 
 
 # ==========================================
@@ -298,7 +239,7 @@ def add_event_name_column():
 # ==========================================
 
 def get_event_names():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -313,51 +254,32 @@ def get_event_names():
     """)
 
     rows = cursor.fetchall()
-
     conn.close()
 
     return [row[0] for row in rows]
 
 
 def init_db():
-    """ตรวจสอบและเพิ่มคอลัมน์ใหม่ๆ ในตาราง sales อัตโนมัติ โดยไม่กระทบข้อมูลเดิม"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
+    """ตรวจสอบและสร้างตาราง sales และ shifts อัตโนมัติ"""
     create_sales_table()
     create_shift_table()
 
-    cursor.execute("PRAGMA table_info(sales)")
-    columns = [row[1] for row in cursor.fetchall()]
-
-    if "payment_method" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN payment_method TEXT DEFAULT 'เงินสด'")
-    if "shift_id" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN shift_id INTEGER")
-    if "station_name" not in columns:
-        cursor.execute("ALTER TABLE sales ADD COLUMN station_name TEXT DEFAULT 'จุดขายที่ 1'")
-
-    conn.commit()
-    conn.close()
-
 
 # ==========================================
-# ดึงรายการขายล่าสุด (แก้ไขให้แยกตามจุดขาย + ชื่องาน)
+# ดึงรายการขายล่าสุด (แยกตามจุดขาย + ชื่องาน)
 # ==========================================
 
 def get_recent_sales(station_name: str = "จุดขายที่ 1", event_name: str = None):
     init_db()
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # สร้างเงื่อนไขการค้นหา
-    conditions = ["station_name = ?", "is_closed = 0"]
+    conditions = ["station_name = %s", "is_closed = 0"]
     params = [station_name]
 
-    # ถ้ามีการระบุชื่องาน ให้เพิ่มเงื่อนไข event_name เข้าไปด้วย
     if event_name and event_name.strip():
-        conditions.append("event_name = ?")
+        conditions.append("event_name = %s")
         params.append(event_name.strip())
 
     where_clause = " WHERE " + " AND ".join(conditions)
@@ -386,18 +308,22 @@ def get_recent_sales(station_name: str = "จุดขายที่ 1", event_
         created_at = row[0]
         category = row[1]
         size = row[2]
-        price = row[3]
+        price = float(row[3]) if row[3] is not None else 0.0
         row_event = row[4]
         payment_method = row[5] if len(row) > 5 and row[5] else "เงินสด"
         row_station = row[6] if len(row) > 6 and row[6] else "จุดขายที่ 1"
 
-        try:
-            date_part, time_part = created_at.split(" ")
-            year, month, day = date_part.split("-")
-            hour, minute, second = time_part.split(":")
-            display_time = f"{day}/{month}/{year} {hour}:{minute}"
-        except Exception:
-            display_time = created_at
+        if isinstance(created_at, datetime):
+            display_time = created_at.strftime("%d/%m/%Y %H:%M")
+        else:
+            try:
+                created_str = str(created_at)
+                date_part, time_part = created_str.split(" ")
+                year, month, day = date_part.split("-")
+                hour, minute, second = time_part.split(":")
+                display_time = f"{day}/{month}/{year} {hour}:{minute}"
+            except Exception:
+                display_time = str(created_at)
 
         data.append(
             {
@@ -415,29 +341,24 @@ def get_recent_sales(station_name: str = "จุดขายที่ 1", event_
 
 
 # ==========================================
-# 🆕 ระบบ SHIFTS & STATIONS (ปรับแก้ไขให้ล็อก event_name ร่วมด้วย)
+# ระบบ SHIFTS & STATIONS
 # ==========================================
 
 def create_shift_table():
     """สร้างตาราง shifts สำหรับเก็บรอบการขาย"""
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS shifts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            station_name TEXT DEFAULT 'จุดขายที่ 1',
-            event_name TEXT DEFAULT '',
-            opened_at TEXT,
-            closed_at TEXT,
-            status TEXT DEFAULT 'OPEN'
-        )
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            station_name VARCHAR(255) DEFAULT 'จุดขายที่ 1',
+            event_name VARCHAR(255) DEFAULT '',
+            opened_at DATETIME,
+            closed_at DATETIME,
+            status VARCHAR(50) DEFAULT 'OPEN'
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     """)
-
-    cursor.execute("PRAGMA table_info(shifts)")
-    columns = [row[1] for row in cursor.fetchall()]
-    if "event_name" not in columns:
-        cursor.execute("ALTER TABLE shifts ADD COLUMN event_name TEXT DEFAULT ''")
 
     conn.commit()
     conn.close()
@@ -448,12 +369,12 @@ def get_current_shift(station_name="จุดขายที่ 1", event_name="
     create_shift_table()
     event_name = event_name.strip() if event_name else ""
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT id FROM shifts 
-        WHERE station_name = ? AND event_name = ? AND status = 'OPEN' 
+        WHERE station_name = %s AND event_name = %s AND status = 'OPEN' 
         ORDER BY id DESC LIMIT 1
     """, (station_name, event_name))
 
@@ -465,7 +386,7 @@ def get_current_shift(station_name="จุดขายที่ 1", event_name="
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cursor.execute("""
             INSERT INTO shifts (station_name, event_name, opened_at, status)
-            VALUES (?, ?, ?, 'OPEN')
+            VALUES (%s, %s, %s, 'OPEN')
         """, (station_name, event_name, now))
         conn.commit()
         shift_id = cursor.lastrowid
@@ -479,7 +400,7 @@ def get_shift_sales_summary(station_name="จุดขายที่ 1", event_
     event_name = event_name.strip() if event_name else ""
     shift_id = get_current_shift(station_name, event_name)
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -490,7 +411,7 @@ def get_shift_sales_summary(station_name="จุดขายที่ 1", event_
             COALESCE(SUM(CASE WHEN payment_method = 'โอนเงิน' THEN price ELSE 0 END), 0) as transfer,
             COALESCE(SUM(CASE WHEN payment_method = 'คนละครึ่ง' THEN price ELSE 0 END), 0) as half
         FROM sales
-        WHERE station_name = ? AND event_name = ? AND shift_id = ? AND is_closed = 0
+        WHERE station_name = %s AND event_name = %s AND shift_id = %s AND is_closed = 0
     """, (station_name, event_name, shift_id))
 
     summary = cursor.fetchone()
@@ -501,10 +422,10 @@ def get_shift_sales_summary(station_name="จุดขายที่ 1", event_
         "station_name": station_name,
         "event_name": event_name,
         "total_items": summary[0] if summary else 0,
-        "total_revenue": summary[1] if summary else 0.0,
-        "cash": summary[2] if summary else 0.0,
-        "transfer": summary[3] if summary else 0.0,
-        "half": summary[4] if summary else 0.0
+        "total_revenue": float(summary[1]) if summary and summary[1] is not None else 0.0,
+        "cash": float(summary[2]) if summary and summary[2] is not None else 0.0,
+        "transfer": float(summary[3]) if summary and summary[3] is not None else 0.0,
+        "half": float(summary[4]) if summary and summary[4] is not None else 0.0
     }
 
 
@@ -515,21 +436,20 @@ def close_current_shift(station_name="จุดขายที่ 1", event_name
     shift_id = summary.get("shift_id")
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 🔍 พิมพ์ดูค่าที่ระบบกำลังจะไปสั่งอัปเดตในฐานข้อมูล
     print(f"🛠️ [DB EXECUTING UPDATE] shift_id={shift_id} | station='{station_name}' | event='{event_name}'")
 
     if not shift_id:
         print("⚠️ ไม่พบ shift_id ที่เปิดอยู่ ยกเลิกการปิดยอด")
         return summary
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     # 1. ปิด Shift
     cursor.execute("""
         UPDATE shifts 
-        SET status = 'CLOSED', closed_at = ? 
-        WHERE id = ? AND station_name = ? AND event_name = ?
+        SET status = 'CLOSED', closed_at = %s 
+        WHERE id = %s AND station_name = %s AND event_name = %s
     """, (now, shift_id, station_name, event_name))
     print(f"   └─ แถวที่โดนปิดในตาราง 'shifts': {cursor.rowcount} รายการ")
 
@@ -537,14 +457,14 @@ def close_current_shift(station_name="จุดขายที่ 1", event_name
     cursor.execute("""
         UPDATE sales 
         SET is_closed = 1 
-        WHERE station_name = ? AND event_name = ? AND shift_id = ?
+        WHERE station_name = %s AND event_name = %s AND shift_id = %s
     """, (station_name, event_name, shift_id))
     print(f"   └─ แถวที่โดนปิดในตาราง 'sales': {cursor.rowcount} รายการ")
 
     # 3. เปิด Shift ใหม่
     cursor.execute("""
         INSERT INTO shifts (station_name, event_name, status, opened_at)
-        VALUES (?, ?, 'OPEN', ?)
+        VALUES (%s, %s, 'OPEN', %s)
     """, (station_name, event_name, now))
 
     conn.commit()
