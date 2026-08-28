@@ -18,6 +18,7 @@ from app.routes.report import router as report_router
 from app.routes.size import router as size_router
 from app.routes.home import router as home_router
 from app.routes.sale import router as sale_router
+from app.routes.sell import router as sell_router
 from app.routes.admin import router as admin_router
 from app.routes.account import router as account_router
 
@@ -67,7 +68,13 @@ app.mount(
 # ==========================================
 
 app.include_router(home_router)
+
+# หน้า /sale + Recent Sales + Undo + Shift
 app.include_router(sale_router)
+
+# API ขายตัวใหม่ Ultra-Fast
+app.include_router(sell_router)
+
 app.include_router(admin_router)
 app.include_router(size_router)
 app.include_router(report_router)
@@ -76,7 +83,11 @@ app.include_router(dashboard_router)
 app.include_router(pdf_router)
 app.include_router(receive_router)
 app.include_router(owner_router)
-app.include_router(api_sale_router)
+
+# ปิด api_sale_router ชั่วคราว
+# เพราะมี API ซ้ำกับ sale.py
+# app.include_router(api_sale_router)
+
 app.include_router(auth_router)
 app.include_router(logout_router)
 app.include_router(history_router)

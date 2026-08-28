@@ -44,17 +44,18 @@ class SellRequest(BaseModel):
 
 class ShiftRequest(BaseModel):
     station_name: Optional[str] = "จุดขายที่ 1"
-    event_name: Optional[str] = ""  # 🆕 เพิ่มให้รองรับชื่องาน
+    event_name: Optional[str] = ""
 
 
 # =====================================
-# ขายสินค้า
+# ขายสินค้า (ปรับแต่ง Response คืนค่าทนทานต่อ JS ทุกประเภท)
 # =====================================
 
 @router.post("/api/sell")
 def api_sell(data: SellRequest):
     if not data.cart:
         return {
+            "status": "error",
             "success": False,
             "message": "❌ ไม่มีรายการสินค้าในตะกร้า"
         }
@@ -80,6 +81,7 @@ def api_sell(data: SellRequest):
             if not stock_ok:
                 _rollback_sales(processed_items)
                 return {
+                    "status": "error",
                     "success": False,
                     "message": f"❌ {category} {size} สต๊อกไม่พอ"
                 }
@@ -89,6 +91,7 @@ def api_sell(data: SellRequest):
                 increase_stock(category, size)
                 _rollback_sales(processed_items)
                 return {
+                    "status": "error",
                     "success": False,
                     "message": f"❌ ไม่พบข้อมูลราคาของ {category} {size}"
                 }
@@ -110,11 +113,12 @@ def api_sell(data: SellRequest):
                 increase_stock(category, size)
                 _rollback_sales(processed_items)
                 return {
+                    "status": "error",
                     "success": False,
                     "message": "❌ ไม่สามารถบันทึกรายการขายได้"
                 }
 
-            # ✨ 2. บันทึกรายรับลงบัญชีร้านค้า (scope='work') ทันทีเมื่อขายสำเร็จ 1 รายการ
+            # บันทึกรายรับลงบัญชีร้านค้า
             try:
                 add_transaction(
                     title=f"ขาย {category} ({size}) - {payment_method}",
@@ -139,18 +143,24 @@ def api_sell(data: SellRequest):
                 "stock": get_stock(category, size)
             })
 
-    # ดึงยอดสรุปตาม Shift
+    # ดึงยอดสรุปตาม Shift ( fallback ไปดึงยอดวันนี้ถ้า shift เป็น 0)
     try:
         shift_summary = get_shift_sales_summary(station_name, event_name)
-    except TypeError:
-        shift_summary = get_shift_sales_summary(station_name)
+    except Exception:
+        shift_summary = {}
+
+    cnt = shift_summary.get("total_items") if isinstance(shift_summary, dict) and shift_summary.get("total_items") else today_sales_count()
+    rev = shift_summary.get("total_revenue") if isinstance(shift_summary, dict) and shift_summary.get("total_revenue") else today_sales_revenue()
 
     return {
+        "status": "success",
         "success": True,
-        "message": "✅ ขายสำเร็จ",
+        "message": "✅ บันทึกการขายสำเร็จ",
         "sales": success_sales,
-        "count": shift_summary.get("total_items", 0) if isinstance(shift_summary, dict) else 0,
-        "revenue": shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
+        "count": cnt,
+        "total_count": cnt,
+        "revenue": rev,
+        "total_revenue": rev
     }
 
 
@@ -179,98 +189,23 @@ def recent_sales(
     try:
         shift_summary = get_shift_sales_summary(selected_station, event_name)
     except TypeError:
-        shift_summary = get_shift_sales_summary(selected_station)
+        shift_summary = {}
 
-    total_count = shift_summary.get("total_items", len(sales_data)) if isinstance(shift_summary, dict) else len(sales_data)
-    total_rev = shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
+    total_count = shift_summary.get("total_items") if isinstance(shift_summary, dict) and shift_summary.get("total_items") else today_sales_count()
+    total_rev = shift_summary.get("total_revenue") if isinstance(shift_summary, dict) and shift_summary.get("total_revenue") else today_sales_revenue()
 
     return {
+        "status": "success",
         "success": True,
         "sales": sales_data,
         "count": total_count,
         "total_count": total_count,
-        "revenue": total_rev
+        "revenue": total_rev,
+        "total_revenue": total_rev
     }
 
-
 # =====================================
-# Undo Sale
-# =====================================
-
-@router.post("/api/undo-sale")
-def undo_sale(data: Optional[ShiftRequest] = None):
-    station_name = data.station_name if data and data.station_name else "จุดขายที่ 1"
-    event_name = data.event_name if data and data.event_name else ""
-    
-    try:
-        last = get_last_sale(station_name)
-    except TypeError:
-        last = get_last_sale()
-
-    try:
-        shift_summary = get_shift_sales_summary(station_name, event_name)
-    except TypeError:
-        shift_summary = get_shift_sales_summary(station_name)
-
-    if not last:
-        return {
-            "success": False,
-            "message": "❌ ไม่มีรายการขายให้ยกเลิก",
-            "count": shift_summary.get("total_items", 0) if isinstance(shift_summary, dict) else 0,
-            "revenue": shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
-        }
-
-    # ข้อมูลจาก last_sale: [sale_id, category, size, price]
-    sale_id, category, size = last[0], last[1], last[2]
-    price = last[3] if len(last) > 3 else 0.0
-
-    stock_ok = increase_stock(category, size)
-    if not stock_ok:
-        return {
-            "success": False,
-            "message": f"❌ ไม่สามารถคืน Stock {category} {size} ได้"
-        }
-
-    deleted = delete_sale(sale_id)
-    if not deleted:
-        reduce_stock(category, size)
-        return {
-            "success": False,
-            "message": "❌ ไม่สามารถลบรายการขายได้"
-        }
-
-    # ✨ 3. บันทึกรายการหักลบรายรับในบัญชี เมื่อมีการ Undo / ยกเลิกรายการขาย
-    try:
-        if price > 0:
-            add_transaction(
-                title=f"ยกเลิกรายการ {category} ({size})",
-                trans_type="expense",
-                amount=float(price),
-                category="ยกเลิกการขาย",
-                scope="work"
-            )
-    except Exception as e:
-        print(f"Error sync Undo to Account DB: {e}")
-
-    try:
-        shift_summary = get_shift_sales_summary(station_name, event_name)
-    except TypeError:
-        shift_summary = get_shift_sales_summary(station_name)
-
-    return {
-        "success": True,
-        "message": f"↩ ยกเลิก {category} {size} แล้ว",
-        "sale_id": sale_id,
-        "category": category,
-        "size": size,
-        "stock": get_stock(category, size),
-        "count": shift_summary.get("total_items", 0) if isinstance(shift_summary, dict) else 0,
-        "revenue": shift_summary.get("total_revenue", 0) if isinstance(shift_summary, dict) else 0
-    }
-
-
-# =====================================
-# 🆕 API ดูสรุปยอด Shift ปัจจุบัน (รองรับทั้ง /api/close-shift-summary และ /api/shift-summary)
+# API สรุปยอด Shift ปัจจุบัน
 # =====================================
 
 @router.get("/api/close-shift-summary")
@@ -281,11 +216,12 @@ def api_shift_summary(
 ):
     try:
         summary = get_shift_sales_summary(station_name, event_name)
-    except TypeError:
-        summary = get_shift_sales_summary(station_name)
+    except Exception:
+        summary = {}
 
     if isinstance(summary, dict):
         return {
+            "status": "success",
             "success": True,
             "total_items": summary.get("total_items", 0),
             "cash": summary.get("cash", 0),
@@ -295,11 +231,11 @@ def api_shift_summary(
             "summary": summary
         }
     
-    return {"success": True, "summary": summary}
+    return {"status": "success", "success": True, "summary": summary}
 
 
 # =====================================
-# 🆕 API กดปิดยอดประจำวัน
+# API กดปิดยอดประจำวัน
 # =====================================
 
 @router.post("/api/close-shift")
@@ -313,6 +249,7 @@ def api_close_shift(data: ShiftRequest):
         summary = close_current_shift(station_name)
 
     return {
+        "status": "success",
         "success": True,
         "message": f"✅ ปิดยอดประจำวันเรียบร้อยแล้ว ({station_name})",
         "summary": summary

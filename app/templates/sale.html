@@ -1151,18 +1151,30 @@ let cart = [];
 let selectedPaymentMethod = 'เงินสด';
 let currentFinalTotal = 0;
 
+let recentSalesTimer = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedEventName();
     loadRecentSales();
 
     const eventInput = document.getElementById("eventName");
+
     if (eventInput) {
         eventInput.addEventListener("input", () => {
             saveEventName();
-            loadRecentSales();
+
+            // รอ 500ms หลังหยุดพิมพ์ ค่อยยิง API
+            clearTimeout(recentSalesTimer);
+
+            recentSalesTimer = setTimeout(() => {
+                loadRecentSales();
+            }, 500);
         });
+
         eventInput.addEventListener("change", () => {
             saveEventName();
+
+            clearTimeout(recentSalesTimer);
             loadRecentSales();
         });
     }
@@ -1409,42 +1421,48 @@ async function submitBatchSale() {
 
     const payload = {
         cart: cart,
+        items: cart, // ส่งสำรองไว้ทั้ง cart และ items
         discount: discount,
         payment_method: selectedPaymentMethod,
         event_name: eventName,
         station_name: getSelectedStation()
     };
 
-    if (!navigator.onLine) {
-        await processOfflineSave(payload);
-        return;
-    }
-
     try {
-        const response = await fetch("/api/sell", {
+        const response = await fetch("/api/sell-batch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
+        // ถ้า Server ตอบกลับ status 500 ให้แสดง alert ทันที
+        if (!response.ok) {
+            const errText = await response.text();
+            alert("❌ Server Error (" + response.status + "): " + errText);
+            return;
+        }
+
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success || data.status === "success") {
             showToast("✅ บันทึกการขายเรียบร้อย");
             resetCartAndModal();
             await loadRecentSales();
         } else {
-            showToast(data.message || "❌ ขายไม่สำเร็จ");
+            alert(data.message || "❌ ขายไม่สำเร็จ");
         }
     } catch (error) {
-        console.warn("ยิง API ไม่สำเร็จ สลับไปใช้ Offline Mode");
-        await processOfflineSave(payload);
+        console.error("Fetch Error:", error);
+        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + error.message);
     }
 }
 
 async function processOfflineSave(payload) {
-    if (typeof saveSaleOffline === 'function') {
-        const saved = await saveSaleOffline(payload);
+    // เช็คทั้ง saveSaleOffline และ saveOfflineOrder
+    const offlineFunc = window.saveSaleOffline || window.saveOfflineOrder || window.saveOrderOffline;
+
+    if (typeof offlineFunc === 'function') {
+        const saved = await offlineFunc(payload);
         if (saved) {
             showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
             resetCartAndModal();
@@ -1452,7 +1470,17 @@ async function processOfflineSave(payload) {
             alert("❌ ไม่สามารถบันทึกข้อมูล Offline ลงเครื่องได้");
         }
     } else {
-        alert("❌ ไม่พบระบบบันทึก Offline ใน base.html");
+        // กรณีไม่มีฟังก์ชัน ให้เซฟลง LocalStorage โดยตรงทันทีเป็น Fallback
+        try {
+            let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
+            offlineOrders.push({ ...payload, timestamp: new Date().toISOString() });
+            localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
+            
+            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
+            resetCartAndModal();
+        } catch (e) {
+            alert("❌ ไม่สามารถบันทึกข้อมูลลง LocalStorage ได้");
+        }
     }
 }
 
@@ -1465,68 +1493,189 @@ function resetCartAndModal() {
 }
 
 /* --- ดึงข้อมูลการขายล่าสุด --- */
+let recentSalesController = null;
+let recentSalesRequestId = 0;
+
 async function loadRecentSales() {
+
     if (!navigator.onLine) return;
 
     const stationName = getSelectedStation();
-    const eventInput = document.getElementById("eventName") || document.getElementById("event_name_input") || document.getElementById("event_name");
+
+    const eventInput =
+        document.getElementById("eventName") ||
+        document.getElementById("event_name_input") ||
+        document.getElementById("event_name");
+
     const eventName = eventInput ? eventInput.value.trim() : "";
 
+    // ถ้ามี Request เก่ายังทำงานอยู่ ให้ยกเลิก
+    if (recentSalesController) {
+        recentSalesController.abort();
+    }
+
+    recentSalesController = new AbortController();
+
+    // ป้องกัน Response เก่ามาทับ Response ใหม่
+    const requestId = ++recentSalesRequestId;
+
     try {
-        let url = `/get_recent_sales?station=${encodeURIComponent(stationName)}&station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`;
-        
-        let response = await fetch(url);
-        
+
+        // ยิง API เพียงเส้นทางเดียว
+        const url =
+            `/api/recent-sales?station_name=${encodeURIComponent(stationName)}` +
+            `&event_name=${encodeURIComponent(eventName)}`;
+
+        const response = await fetch(url, {
+            signal: recentSalesController.signal,
+            cache: "no-store"
+        });
+
         if (!response.ok) {
-            url = `/api/recent-sales?station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`;
-            response = await fetch(url);
+            throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
 
-        if (data.success) {
-            const saleCountEl = document.getElementById("saleCount");
-            if (saleCountEl) {
-                const countVal = (data.total_items !== undefined) ? data.total_items : 
-                                 (data.count !== undefined) ? data.count : 
-                                 (data.total_count !== undefined) ? data.total_count : 0;
-                saleCountEl.textContent = countVal;
-            }
-
-            const revenueEl = document.getElementById("headerRevenue");
-            if (revenueEl) {
-                const revenueVal = (data.total_revenue !== undefined) ? data.total_revenue : 
-                                   (data.revenue !== undefined) ? data.revenue : 0;
-                revenueEl.textContent = Number(revenueVal).toLocaleString();
-            }
-
-            const recentContainer = document.getElementById("recent");
-            if (recentContainer) {
-                const sales = data.sales || [];
-                if (sales.length === 0) {
-                    recentContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;">ยังไม่มีรายการขายในรอบนี้</div>';
-                } else {
-                    recentContainer.innerHTML = sales.map(item => {
-                        let payClass = "pay-cash";
-                        const payMethod = item.payment_method || "เงินสด";
-                        if (payMethod === "โอนเงิน") payClass = "pay-transfer";
-                        else if (payMethod === "คนละครึ่ง") payClass = "pay-half";
-
-                        return `
-                        <div class="recent-row">
-                            <span class="recent-time">${item.datetime || '-'}</span>
-                            <span class="recent-event">${item.event_name || 'ทั่วไป'}</span>
-                            <span class="recent-product">${item.category || '-'}</span>
-                            <span class="recent-size">${item.size || '-'}</span>
-                            <span class="recent-price">${(item.price || 0).toLocaleString()} ฿</span>
-                            <span class="recent-payment ${payClass}">${payMethod}</span>
-                        </div>
-                    `}).join('');
-                }
-            }
+        // ถ้ามี Request ใหม่กว่าแล้ว ไม่ต้องเอาข้อมูลเก่ามาแสดง
+        if (requestId !== recentSalesRequestId) {
+            return;
         }
+
+        if (!data.success) {
+            return;
+        }
+
+        // =========================
+        // จำนวนสินค้าที่ขาย
+        // =========================
+
+        const saleCountEl = document.getElementById("saleCount");
+
+        if (saleCountEl) {
+
+            const countVal =
+                data.total_items !== undefined
+                    ? data.total_items
+                    : data.count !== undefined
+                        ? data.count
+                        : data.total_count !== undefined
+                            ? data.total_count
+                            : 0;
+
+            saleCountEl.textContent = countVal;
+        }
+
+        // =========================
+        // ยอดขาย
+        // =========================
+
+        const revenueEl =
+            document.getElementById("headerRevenue") ||
+            document.getElementById("header-revenue") ||
+            document.getElementById("today-revenue");
+
+        if (revenueEl) {
+
+            const revenueVal =
+                data.total_revenue !== undefined
+                    ? data.total_revenue
+                    : data.revenue !== undefined
+                        ? data.revenue
+                        : 0;
+
+            revenueEl.textContent =
+                Number(revenueVal).toLocaleString();
+        }
+
+        // =========================
+        // รายการขายล่าสุด
+        // =========================
+
+        const recentContainer =
+            document.getElementById("recent");
+
+        if (!recentContainer) return;
+
+        const sales = data.sales || [];
+
+        if (sales.length === 0) {
+
+            recentContainer.innerHTML = `
+                <div style="
+                    text-align:center;
+                    color:#94a3b8;
+                    padding:16px;
+                ">
+                    ยังไม่มีรายการขายในรอบนี้
+                </div>
+            `;
+
+            return;
+        }
+
+        recentContainer.innerHTML = sales.map(item => {
+
+            const payMethod =
+                item.payment_method || "เงินสด";
+
+            let payClass = "pay-cash";
+
+            if (payMethod === "โอนเงิน") {
+                payClass = "pay-transfer";
+            } else if (payMethod === "คนละครึ่ง") {
+                payClass = "pay-half";
+            }
+
+            return `
+                <div class="recent-row">
+
+                    <span class="recent-time">
+                        ${item.datetime || '-'}
+                    </span>
+
+                    <span class="recent-event">
+                        ${item.event_name || 'ทั่วไป'}
+                    </span>
+
+                    <span class="recent-product">
+                        ${item.category || '-'}
+                    </span>
+
+                    <span class="recent-size">
+                        ${item.size || '-'}
+                    </span>
+
+                    <span class="recent-price">
+                        ${Number(item.price || 0).toLocaleString()} ฿
+                    </span>
+
+                    <span class="recent-payment ${payClass}">
+                        ${payMethod}
+                    </span>
+
+                </div>
+            `;
+
+        }).join('');
+
     } catch (error) {
-        console.error("Error loading recent sales:", error);
+
+        // AbortError คือ Request เก่าที่เราสั่งยกเลิกเอง
+        // ไม่ต้องแสดงเป็น Error
+        if (error.name !== "AbortError") {
+            console.error(
+                "Error loading recent sales:",
+                error
+            );
+        }
+
+    } finally {
+
+        // เคลียร์ Controller เฉพาะ Request ปัจจุบัน
+        if (requestId === recentSalesRequestId) {
+            recentSalesController = null;
+        }
     }
 }
 
@@ -1709,6 +1858,26 @@ function handleAddToCart(btn) {
     // เรียกฟังก์ชัน addToCart เดิม
     addToCart(name, size, price);
 }
+</script>
+
+<script>
+  // บังคับสร้างฟังก์ชัน Offline ไว้ในตัว sale.html เอง
+  window.saveOfflineOrder = window.saveOfflineOrder || function(orderData) {
+      try {
+          let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
+          offlineOrders.push({
+              ...orderData,
+              timestamp: new Date().toISOString()
+          });
+          localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
+          console.log("บันทึกข้อมูล Offline สำเร็จ:", orderData);
+          return true;
+      } catch (err) {
+          console.error("เกิดข้อผิดพลาดในการบันทึก Offline:", err);
+          return false;
+      }
+  };
+  window.saveOrderOffline = window.saveOfflineOrder;
 </script>
 
 {% endblock %}

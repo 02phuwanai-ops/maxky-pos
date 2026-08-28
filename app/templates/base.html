@@ -315,5 +315,25 @@ document.addEventListener("click", function(event) {
 });
 </script>
 
+<script>
+  // บังคับสร้างฟังก์ชัน Offline ไว้ในหน้าขายโดยตรง
+  window.saveOfflineOrder = window.saveOfflineOrder || function(orderData) {
+      try {
+          let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
+          offlineOrders.push({
+              ...orderData,
+              timestamp: new Date().toISOString()
+          });
+          localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
+          console.log("บันทึกข้อมูล Offline สำเร็จ:", orderData);
+          return true;
+      } catch (err) {
+          console.error("เกิดข้อผิดพลาดในการบันทึก Offline:", err);
+          return false;
+      }
+  };
+  window.saveOrderOffline = window.saveOfflineOrder;
+</script>
+
 </body>
 </html>

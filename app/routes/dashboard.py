@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +9,8 @@ from app.database.dashboard_db import (
     get_low_stock_count,
     get_low_stock_items,
     get_top_product,
-    get_top_sales
+    get_top_sales,
+    get_db_connection
 )
 
 from app.database.stock_db import (
@@ -33,6 +34,7 @@ def dashboard(request: Request):
     if request.cookies.get("owner") != "yes":
         return RedirectResponse("/owner-login")
 
+    # เรียก get_dashboard โดยไม่ล็อก station เพื่อดึงรายการขายล่าสุดในกะปัจจุบันทั้งหมด
     count, revenue, profit = get_dashboard()
     stock = get_stock_count()
     low_stock = get_low_stock_count()
@@ -72,26 +74,25 @@ def stock_group():
         "groups": groups
     })
 
+
 # ==========================================
-# 🛑 ROUTE ล้างข้อมูลยอดขาย (การันตีสต๊อกไม่หาย 100%)
+# ROUTE ล้างข้อมูลยอดขาย (ใช้ MySQL อัปเดตผ่าน Database กลาง)
 # ==========================================
 @router.get("/api/clear-all-data")
 @router.post("/api/clear-all-data")
 def clear_all_data():
     try:
-        conn = sqlite3.connect("data/maxky_pos.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         # 1. ลบเฉพาะตารางประวัติการขายเท่านั้น
         cursor.execute("DELETE FROM sales;")
         
-        # 2. ลบประวัติกะการขาย (ถ้ามี)
+        # 2. ลบประวัติกะการขาย
         try:
             cursor.execute("DELETE FROM shifts;")
         except Exception:
             pass
-
-        # ❌ ลบคำสั่งเกี่ยวกับ stock ออกทั้งหมด เพื่อไม่ให้ไปยุ่งกับตาราง stock
 
         conn.commit()
         conn.close()
