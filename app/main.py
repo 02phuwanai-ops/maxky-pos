@@ -8,7 +8,6 @@ from app.routes.excel_export import router as excel_router
 from app.routes.history import router as history_router
 from app.routes.logout import router as logout_router
 from app.routes.auth import router as auth_router
-from app.routes.api_sale import router as api_sale_router
 from app.routes.owner import router as owner_router
 from app.routes.receive import router as receive_router
 from app.routes.pdf_export import router as pdf_router
@@ -32,6 +31,7 @@ from app.database.stock_db import (
 )
 from app.database.account_db import init_account_db
 
+
 # ==========================================
 # FastAPI
 # ==========================================
@@ -41,9 +41,23 @@ app = FastAPI(
     version="0.4"
 )
 
+
+# ==========================================
+# Health Check
+# ==========================================
+
 @app.get("/ping")
 def ping():
     return {"status": "alive"}
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "service": "MAXKY POS"
+    }
+
 
 # ==========================================
 # Templates
@@ -52,6 +66,7 @@ def ping():
 templates = Jinja2Templates(
     directory="app/templates"
 )
+
 
 # ==========================================
 # Static
@@ -63,16 +78,17 @@ app.mount(
     name="static"
 )
 
+
 # ==========================================
 # Routers
 # ==========================================
 
 app.include_router(home_router)
 
-# หน้า /sale + Recent Sales + Undo + Shift
+# หน้า POS
 app.include_router(sale_router)
 
-# API ขายตัวใหม่ Ultra-Fast
+# API ขาย Ultra-Fast
 app.include_router(sell_router)
 
 app.include_router(admin_router)
@@ -84,10 +100,6 @@ app.include_router(pdf_router)
 app.include_router(receive_router)
 app.include_router(owner_router)
 
-# ปิด api_sale_router ชั่วคราว
-# เพราะมี API ซ้ำกับ sale.py
-# app.include_router(api_sale_router)
-
 app.include_router(auth_router)
 app.include_router(logout_router)
 app.include_router(history_router)
@@ -96,12 +108,15 @@ app.include_router(backup_router)
 app.include_router(product_router)
 app.include_router(account_router)
 
+
 # ==========================================
 # Database Startup
 # ==========================================
 
 @app.on_event("startup")
 def startup():
+
+    print("🚀 Starting MAXKY POS...")
 
     DatabaseManager.initialize()
 
@@ -112,6 +127,9 @@ def startup():
     init_account_db()
 
     cleanup_orphan_stock()
+
+    print("✅ MAXKY POS started successfully")
+
 
 # ==========================================
 # DEBUG ROUTES
@@ -130,6 +148,7 @@ def debug_routes():
         if hasattr(route, "methods")
     ]
 
+
 # ==========================================
 # DEBUG ROUTER DETAILS
 # ==========================================
@@ -140,6 +159,7 @@ def debug_routers():
     routers = {
         "home": home_router,
         "sale": sale_router,
+        "sell": sell_router,
         "admin": admin_router,
         "size": size_router,
         "report": report_router,
@@ -148,7 +168,6 @@ def debug_routers():
         "pdf": pdf_router,
         "receive": receive_router,
         "owner": owner_router,
-        "api_sale": api_sale_router,
         "auth": auth_router,
         "logout": logout_router,
         "history": history_router,
