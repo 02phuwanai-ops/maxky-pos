@@ -42,10 +42,9 @@ def get_db_connection():
 # CREATE TABLE / INDEX
 # ==========================================
 
-def init_account_db():
+def init_account_db(conn=None):
     """
     สร้างตารางและ Index หากยังไม่มี
-
     เรียกตรวจสอบเพียงครั้งเดียวต่อการรัน Server
     """
 
@@ -54,14 +53,13 @@ def init_account_db():
     if _account_db_initialized:
         return
 
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
-
-            # ==========================================
-            # CREATE TABLE
-            # ==========================================
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS transactions (
@@ -92,10 +90,6 @@ def init_account_db():
                     )
                 )
             """)
-
-            # ==========================================
-            # ตรวจสอบ / เพิ่ม Index สำหรับ Database เดิม
-            # ==========================================
 
             required_indexes = [
                 (
@@ -139,7 +133,8 @@ def init_account_db():
         _account_db_initialized = True
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
 
 
 # ==========================================
@@ -151,13 +146,16 @@ def add_transaction(
     trans_type: str,
     amount: float,
     category: str,
-    scope: str = "personal"
+    scope: str = "personal",
+    conn=None
 ):
     """เพิ่มรายการรายรับ / รายจ่าย"""
 
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
@@ -187,19 +185,22 @@ def add_transaction(
             ))
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
 
 
 # ==========================================
 # DELETE TRANSACTION
 # ==========================================
 
-def delete_transaction(trans_id: int):
+def delete_transaction(trans_id: int, conn=None):
     """ลบรายการ"""
 
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
@@ -210,7 +211,8 @@ def delete_transaction(trans_id: int):
             """, (trans_id,))
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
 
 
 # ==========================================
@@ -223,13 +225,16 @@ def update_transaction(
     trans_type: str,
     amount: float,
     category: str,
-    scope: str = "personal"
+    scope: str = "personal",
+    conn=None
 ):
     """แก้ไขรายการ"""
 
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
@@ -253,7 +258,8 @@ def update_transaction(
             ))
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
 
 
 # ==========================================
@@ -267,116 +273,61 @@ def build_account_conditions(
 ):
     """
     สร้าง WHERE condition
-
-    ใช้ created_at โดยตรง
-    ไม่ใช้ DATE(created_at)
-    เพื่อให้ Database ใช้ Index ได้ดีขึ้น
+    ใช้ created_at โดยตรง ไม่ใช้ DATE(created_at) เพื่อให้ใช้ Index ได้
     """
 
     conditions = []
     params = []
 
-    # ==========================================
-    # PERSONAL
-    # ==========================================
-
     if selected_scope == "personal":
-
         conditions.append("scope = %s")
         params.append("personal")
 
-    # ==========================================
-    # WORK
-    # ==========================================
-
     elif selected_scope == "work":
-
         conditions.append("scope = %s")
         params.append("work")
-
-        conditions.append(
-            "(is_cleared IS NULL OR is_cleared = 0)"
-        )
-
-    # ==========================================
-    # ALL
-    # ==========================================
+        conditions.append("(is_cleared IS NULL OR is_cleared = 0)")
 
     else:
-
-        conditions.append(
-            "(is_cleared IS NULL OR is_cleared = 0)"
-        )
-
-    # ==========================================
-    # START DATE
-    # ==========================================
+        conditions.append("(is_cleared IS NULL OR is_cleared = 0)")
 
     if start_date:
-
-        conditions.append(
-            "created_at >= %s"
-        )
-
-        params.append(
-            f"{start_date} 00:00:00"
-        )
-
-    # ==========================================
-    # END DATE
-    # ==========================================
+        conditions.append("created_at >= %s")
+        params.append(f"{start_date} 00:00:00")
 
     if end_date:
-
-        conditions.append(
-            "created_at < DATE_ADD(%s, INTERVAL 1 DAY)"
-        )
-
+        conditions.append("created_at < DATE_ADD(%s, INTERVAL 1 DAY)")
         params.append(end_date)
 
     where_clause = ""
 
     if conditions:
-
-        where_clause = (
-            " WHERE " +
-            " AND ".join(conditions)
-        )
+        where_clause = " WHERE " + " AND ".join(conditions)
 
     return where_clause, params
 
 
 # ==========================================
-# GET ACCOUNT SUMMARY
+# GET ACCOUNT SUMMARY (Full Data: History + Chart)
 # ==========================================
 
 def get_account_summary(
     selected_scope: str = "all",
     start_date: str = None,
     end_date: str = None,
-    transaction_limit=20
+    transaction_limit=20,
+    conn=None
 ):
+    """ดึงข้อมูลสรุปรายรับ-รายจ่าย (เต็มรูปแบบ: รวมยอด + ประวัติรายการ + กราฟ)"""
 
-    """
-    ดึงข้อมูลสรุปรายรับ-รายจ่าย
-
-    ลดจำนวน Query:
-    1. Summary Income + Expense
-    2. Transaction History
-    3. Expense Chart
-    4. Work Current Income เฉพาะหน้า Work
-    """
-
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
-
-            # ==========================================
-            # BUILD WHERE
-            # ==========================================
 
             where_clause, params = build_account_conditions(
                 selected_scope,
@@ -384,79 +335,31 @@ def get_account_summary(
                 end_date
             )
 
-            # ==========================================
             # 1. สรุปรายรับ + รายจ่าย
-            # ==========================================
-
             summary_sql = f"""
                 SELECT
-                    IFNULL(
-                        SUM(
-                            CASE
-                                WHEN type = 'income'
-                                THEN amount
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS income,
-
-                    IFNULL(
-                        SUM(
-                            CASE
-                                WHEN type = 'expense'
-                                THEN amount
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS expense
-
+                    IFNULL(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
+                    IFNULL(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
                 FROM transactions
                 {where_clause}
             """
 
-            cursor.execute(
-                summary_sql,
-                params
-            )
-
+            cursor.execute(summary_sql, params)
             summary_row = cursor.fetchone()
 
-            income = float(
-                summary_row[0] or 0
-            )
+            income = float(summary_row[0] or 0)
+            expense = float(summary_row[1] or 0)
 
-            expense = float(
-                summary_row[1] or 0
-            )
-
-            # ==========================================
             # 2. ประวัติรายการ
-            # ==========================================
-
-            # คัดลอก params เพื่อไม่ให้กระทบ Query อื่น
             transaction_params = list(params)
-
             limit_clause = ""
 
-            # หน้าเว็บใช้ค่าเริ่มต้น 20
-            # Export ส่ง transaction_limit=None เพื่อไม่จำกัด
             if transaction_limit is not None:
-
-                transaction_limit = int(
-                    transaction_limit
-                )
-
-                # ป้องกันค่าติดลบหรือศูนย์
+                transaction_limit = int(transaction_limit)
                 if transaction_limit < 1:
                     transaction_limit = 20
-
                 limit_clause = "LIMIT %s"
-
-                transaction_params.append(
-                    transaction_limit
-                )
+                transaction_params.append(transaction_limit)
 
             transaction_sql = f"""
                 SELECT
@@ -473,26 +376,14 @@ def get_account_summary(
                 {limit_clause}
             """
 
-            cursor.execute(
-                transaction_sql,
-                transaction_params
-            )
-
+            cursor.execute(transaction_sql, transaction_params)
             rows = cursor.fetchall()
 
-            # ==========================================
             # 3. กราฟรายจ่าย
-            # ==========================================
-
             if where_clause:
-                chart_where_clause = (
-                    where_clause +
-                    " AND type = %s"
-                )
+                chart_where_clause = where_clause + " AND type = %s"
             else:
-                chart_where_clause = (
-                    " WHERE type = %s"
-                )
+                chart_where_clause = " WHERE type = %s"
 
             chart_sql = f"""
                 SELECT
@@ -504,133 +395,139 @@ def get_account_summary(
                 ORDER BY SUM(amount) DESC
             """
 
-            cursor.execute(
-                chart_sql,
-                params + ["expense"]
-            )
-
+            cursor.execute(chart_sql, params + ["expense"])
             cat_rows = cursor.fetchall()
 
-            # ==========================================
-            # 4. Work Current Income
-            # เรียกเฉพาะหน้า Work
-            # ==========================================
-
+            # 4. Work Current Income เฉพาะหน้า Work
             work_current_income = None
 
             if selected_scope == "work":
-
                 cursor.execute("""
-                    SELECT
-                        IFNULL(SUM(amount), 0)
+                    SELECT IFNULL(SUM(amount), 0)
                     FROM transactions
                     WHERE type = 'income'
                     AND scope = 'work'
                     AND (is_cleared IS NULL OR is_cleared = 0)
                     AND title NOT LIKE 'สรุปยอดจบงาน%'
                 """)
-
                 work_result = cursor.fetchone()
-
-                work_current_income = float(
-                    work_result[0] or 0
-                )
-
-            # ==========================================
-            # RETURN
-            # ==========================================
+                work_current_income = float(work_result[0] or 0)
 
             return {
                 "income": income,
                 "expense": expense,
                 "balance": income - expense,
-
                 "transactions": rows,
-
-                "chart_labels": [
-                    row[0]
-                    for row in cat_rows
-                ],
-
-                "chart_data": [
-                    float(row[1])
-                    for row in cat_rows
-                ],
-
+                "chart_labels": [row[0] for row in cat_rows],
+                "chart_data": [float(row[1]) for row in cat_rows],
                 "selected_scope": selected_scope,
-
-                # ใช้เพื่อลดการเปิด DB Connection เพิ่ม
                 "work_current_income": work_current_income
             }
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
+
+
+# ==========================================
+# GET TOTALS ONLY (Lightweight Query)
+# ==========================================
+
+def get_totals_only(
+    selected_scope: str = "all",
+    start_date: str = None,
+    end_date: str = None,
+    conn=None
+):
+    """ดึงเฉพาะยอดสรุปรายรับ-รายจ่าย (ทำงานเร็วมาก ไม่ดึงประวัติ/กราฟ)"""
+
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
+
+    try:
+        with conn.cursor() as cursor:
+            where_clause, params = build_account_conditions(
+                selected_scope,
+                start_date,
+                end_date
+            )
+
+            summary_sql = f"""
+                SELECT
+                    IFNULL(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
+                    IFNULL(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
+                FROM transactions
+                {where_clause}
+            """
+
+            cursor.execute(summary_sql, params)
+            row = cursor.fetchone()
+
+            income = float(row[0] or 0)
+            expense = float(row[1] or 0)
+
+            return {
+                "income": income,
+                "expense": expense,
+                "balance": income - expense
+            }
+
+    finally:
+        if should_close:
+            conn.close()
 
 
 # ==========================================
 # GET WORK CURRENT INCOME
 # ==========================================
 
-def get_work_income_summary():
-    """
-    ดึงยอดรายรับงานของรอบปัจจุบัน
+def get_work_income_summary(conn=None):
+    """ดึงยอดรายรับงานของรอบปัจจุบัน"""
 
-    คงฟังก์ชันนี้ไว้เพื่อรองรับส่วนอื่นของระบบ
-    """
-
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
         with conn.cursor() as cursor:
-
             cursor.execute("""
-                SELECT
-                    IFNULL(SUM(amount), 0)
+                SELECT IFNULL(SUM(amount), 0)
                 FROM transactions
                 WHERE type = 'income'
                 AND scope = 'work'
                 AND (is_cleared IS NULL OR is_cleared = 0)
                 AND title NOT LIKE 'สรุปยอดจบงาน%'
             """)
-
             result = cursor.fetchone()
-
-            return float(
-                result[0] or 0
-            )
+            return float(result[0] or 0)
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
 
 
 # ==========================================
 # CLEAR WORK INCOME
 # ==========================================
 
-def clear_work_income():
-    """
-    เคลียร์เฉพาะรายรับของ Work
+def clear_work_income(conn=None):
+    """เคลียร์เฉพาะรายรับของ Work"""
 
-    - รายการเดิมถูกตั้ง is_cleared = 1
-    - สร้างรายการสรุปยอดจบงานใหม่
-    - Personal จะไม่ถูกกระทบ
-    """
-
-    init_account_db()
-
-    conn = get_db_connection()
+    should_close = False
+    if conn is None:
+        init_account_db()
+        conn = get_db_connection()
+        should_close = True
 
     try:
-        # ปิด autocommit เฉพาะขั้นตอนนี้
         conn.begin()
 
         with conn.cursor() as cursor:
-
-            # ==========================================
-            # 1. คำนวณรายรับ Work รอบปัจจุบัน
-            # ==========================================
 
             cursor.execute("""
                 SELECT IFNULL(SUM(amount), 0)
@@ -639,21 +536,10 @@ def clear_work_income():
                 AND scope = %s
                 AND (is_cleared IS NULL OR is_cleared = 0)
                 AND title NOT LIKE %s
-            """, (
-                "income",
-                "work",
-                "สรุปยอดจบงาน%"
-            ))
+            """, ("income", "work", "สรุปยอดจบงาน%"))
 
             result = cursor.fetchone()
-
-            total_income = float(
-                result[0] or 0
-            )
-
-            # ==========================================
-            # 2. ถ้ามียอด ให้เคลียร์
-            # ==========================================
+            total_income = float(result[0] or 0)
 
             if total_income > 0:
 
@@ -664,47 +550,16 @@ def clear_work_income():
                     AND scope = %s
                     AND (is_cleared IS NULL OR is_cleared = 0)
                     AND title NOT LIKE %s
-                """, (
-                    "income",
-                    "work",
-                    "สรุปยอดจบงาน%"
-                ))
+                """, ("income", "work", "สรุปยอดจบงาน%"))
 
-                # ==========================================
-                # 3. บันทึกสรุปยอด
-                # ==========================================
-
-                now_thai = datetime.now(
-                    tz_thai
-                ).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-
-                summary_title = (
-                    f"สรุปยอดจบงาน / "
-                    f"เคลียร์ยอดรายรับ "
-                    f"(รวม ฿{total_income:,.2f})"
-                )
+                now_thai = datetime.now(tz_thai).strftime("%Y-%m-%d %H:%M:%S")
+                summary_title = f"สรุปยอดจบงาน / เคลียร์ยอดรายรับ (รวม ฿{total_income:,.2f})"
 
                 cursor.execute("""
                     INSERT INTO transactions (
-                        title,
-                        type,
-                        amount,
-                        category,
-                        scope,
-                        created_at,
-                        is_cleared
+                        title, type, amount, category, scope, created_at, is_cleared
                     )
-                    VALUES (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        0
-                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, 0)
                 """, (
                     summary_title,
                     "income",
@@ -717,9 +572,9 @@ def clear_work_income():
         conn.commit()
 
     except Exception:
-
         conn.rollback()
         raise
 
     finally:
-        conn.close()
+        if should_close:
+            conn.close()

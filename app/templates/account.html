@@ -741,9 +741,6 @@
 
 /* ==========================================================
    PREMIUM REDESIGN v2
-   - ไม่ลบ/ไม่แก้ HTML, Jinja หรือ JavaScript เดิม
-   - ปรับเฉพาะ CSS ให้ดูเป็น Premium / Clean / Balanced
-   - ปุ่ม Export Excel + LINE ลดขนาดและไม่กินพื้นที่
    ========================================================== */
 
 :root {
@@ -878,7 +875,7 @@ body {
     transform: translateY(-1px) !important;
 }
 
-/* LINE = subtle, ไม่ใช้เขียวสดทั้งก้อน */
+/* LINE */
 .section-header-row .action-tools .btn-line {
     background: #fff !important;
     color: #3f4a55 !important;
@@ -1000,17 +997,9 @@ body {
     letter-spacing: -.3px;
 }
 
-.card-box .inc {
-    color: var(--p-success) !important;
-}
-
-.card-box .exp {
-    color: var(--p-danger) !important;
-}
-
-.card-box .bal {
-    color: var(--p-accent) !important;
-}
+.card-box .inc { color: var(--p-success) !important; }
+.card-box .exp { color: var(--p-danger) !important; }
+.card-box .bal { color: var(--p-accent) !important; }
 
 /* ---------- Form / chart panels ---------- */
 .content-grid {
@@ -1225,7 +1214,6 @@ body {
         font-size: 14px !important;
     }
 }
-
 </style>
 
 <div class="container">

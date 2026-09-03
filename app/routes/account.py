@@ -13,6 +13,7 @@ from fastapi.responses import (
 from fastapi.templating import Jinja2Templates
 
 from app.database.account_db import (
+    get_db_connection,
     add_transaction,
     clear_work_income,
     delete_transaction,
@@ -49,253 +50,97 @@ router = APIRouter()
 )
 def account_page(
     request: Request,
-    scope: str = Query("all"),
+    scope: str = Query("personal"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     selected_month: Optional[str] = Query(None),
 ):
-
     current_time = datetime.now(tz_thai)
 
-    # ==========================================
+    # --------------------------------------
     # ตรวจสอบ Scope
-    # ==========================================
-
-    valid_scopes = {
-        "all",
-        "personal",
-        "work",
-    }
-
+    # --------------------------------------
+    valid_scopes = {"all", "personal", "work"}
     if scope not in valid_scopes:
-        scope = "all"
+        scope = "personal"
 
-    # ==========================================
-    # กำหนดเดือนปัจจุบัน
-    # ==========================================
+    # --------------------------------------
+    # 1. กำหนดวันปัจจุบันเสมอถ้าผู้ใช้ไม่ได้เลือกวัน
+    # --------------------------------------
+    if not start_date:
+        start_date = current_time.strftime("%Y-%m-%d")
 
+    if not end_date:
+        end_date = start_date
+
+    # --------------------------------------
+    # 2. กำหนดเดือนปัจจุบันถ้าไม่ได้เลือก
+    # --------------------------------------
     if not selected_month:
+        selected_month = current_time.strftime("%Y-%m")
 
-        selected_month = current_time.strftime(
-            "%Y-%m"
-        )
+    # --------------------------------------
+    # 3. คำนวณช่วงวันของเดือนที่เลือก
+    # --------------------------------------
+    try:
+        year, month = map(int, selected_month.split("-"))
+        datetime(year=year, month=month, day=1)
+    except (ValueError, AttributeError, TypeError):
+        year = current_time.year
+        month = current_time.month
+        selected_month = f"{year:04d}-{month:02d}"
 
-    # ==========================================
-    # ตัวแปรเริ่มต้น
-    # ==========================================
+    last_day = monthrange(year, month)[1]
+    month_start = f"{year:04d}-{month:02d}-01"
+    month_end = f"{year:04d}-{month:02d}-{last_day:02d}"
 
-    monthly_summary = None
-    work_current_income = 0.0
+    # --------------------------------------
+    # เปิด Connection เดียวใช้งานร่วมกันตลอด Request
+    # --------------------------------------
+    conn = get_db_connection()
 
-    # ==========================================
-    # PERSONAL
-    # ==========================================
-
-    if scope == "personal":
-
-        # --------------------------------------
-        # ถ้าไม่ได้เลือกวัน
-        # แสดงข้อมูลของวันนี้
-        # --------------------------------------
-
-        if not start_date:
-
-            start_date = current_time.strftime(
-                "%Y-%m-%d"
-            )
-
-        # --------------------------------------
-        # ถ้าไม่ได้เลือกวันสิ้นสุด
-        # ใช้วันเดียวกับวันเริ่มต้น
-        # --------------------------------------
-
-        if not end_date:
-
-            end_date = start_date
-
-        # --------------------------------------
-        # ดึงข้อมูลของวัน
-        # --------------------------------------
-
+    try:
+        # 4. ดึงสรุปยอดรายวัน (Daily)
         summary = get_account_summary(
-            selected_scope="personal",
+            selected_scope=scope,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            conn=conn
         )
 
-        # --------------------------------------
-        # ตรวจสอบเดือน
-        # --------------------------------------
-
-        try:
-
-            year, month = map(
-                int,
-                selected_month.split("-")
-            )
-
-            # ตรวจสอบว่าเดือนและปีถูกต้องจริง
-            datetime(
-                year=year,
-                month=month,
-                day=1
-            )
-
-        except (
-            ValueError,
-            AttributeError,
-            TypeError,
-        ):
-
-            year = current_time.year
-            month = current_time.month
-
-            selected_month = (
-                f"{year:04d}-{month:02d}"
-            )
-
-        # --------------------------------------
-        # หาวันสุดท้ายของเดือน
-        # รองรับเดือนกุมภาพันธ์ / Leap Year
-        # --------------------------------------
-
-        last_day = monthrange(
-            year,
-            month
-        )[1]
-
-        month_start = (
-            f"{year:04d}-{month:02d}-01"
-        )
-
-        month_end = (
-            f"{year:04d}-{month:02d}-"
-            f"{last_day:02d}"
-        )
-
-        # --------------------------------------
-        # ดึงสรุปยอดทั้งเดือน
-        # --------------------------------------
-
+        # 5. ดึงสรุปยอดรายเดือน (Monthly) โดยใช้ Connection เดิม
         monthly_summary = get_account_summary(
-            selected_scope="personal",
+            selected_scope=scope,
             start_date=month_start,
-            end_date=month_end
+            end_date=month_end,
+            conn=conn
         )
 
-    # ==========================================
-    # WORK
-    # ==========================================
-
-    elif scope == "work":
-
-        # --------------------------------------
-        # ถ้าเลือกเพียงวันเดียว
-        # ให้สิ้นสุดวันเดียวกัน
-        # --------------------------------------
-
-        if start_date and not end_date:
-
-            end_date = start_date
+        # 6. กรณีเลือก Scope เป็น Work
+        work_current_income = 0.0
+        if scope == "work":
+            work_current_income = float(summary.get("work_current_income") or 0)
 
         # --------------------------------------
-        # ดึงข้อมูล Work
+        # RETURN TEMPLATE
         # --------------------------------------
-
-        summary = get_account_summary(
-            selected_scope="work",
-            start_date=start_date,
-            end_date=end_date
+        return templates.TemplateResponse(
+            request=request,
+            name="account.html",
+            context={
+                "request": request,
+                "scope": scope,
+                "summary": summary,
+                "monthly_summary": monthly_summary,
+                "selected_month": selected_month,
+                "work_current_income": work_current_income,
+                "start_date": start_date or "",
+                "end_date": end_date or "",
+            },
         )
-
-        # --------------------------------------
-        # ใช้ยอด Work ที่ get_account_summary()
-        # ดึงมาให้แล้ว ไม่ต้องเปิด DB เพิ่ม
-        # --------------------------------------
-
-        work_current_income = float(
-            summary.get(
-                "work_current_income"
-            ) or 0
-        )
-
-    # ==========================================
-    # ALL
-    # ==========================================
-
-    else:
-
-        # --------------------------------------
-        # ถ้าเลือกวันเดียว
-        # ให้สิ้นสุดวันเดียวกัน
-        # --------------------------------------
-
-        if start_date and not end_date:
-
-            end_date = start_date
-
-        # --------------------------------------
-        # ดึงข้อมูลทั้งหมด
-        # --------------------------------------
-
-        summary = get_account_summary(
-            selected_scope="all",
-            start_date=start_date,
-            end_date=end_date
-        )
-
-    # ==========================================
-    # RETURN TEMPLATE
-    # ==========================================
-
-    return templates.TemplateResponse(
-        request=request,
-        name="account.html",
-        context={
-
-            "request": request,
-
-            # ----------------------------------
-            # Scope ปัจจุบัน
-            # ----------------------------------
-
-            "scope": scope,
-
-            # ----------------------------------
-            # ข้อมูลหน้าหลัก
-            # ----------------------------------
-
-            "summary": summary,
-
-            # ----------------------------------
-            # Personal รายเดือน
-            # ----------------------------------
-
-            "monthly_summary": monthly_summary,
-
-            "selected_month": selected_month,
-
-            # ----------------------------------
-            # Work
-            # ----------------------------------
-
-            "work_current_income": (
-                work_current_income
-            ),
-
-            # ----------------------------------
-            # วันที่สำหรับ Filter
-            # ----------------------------------
-
-            "start_date": (
-                start_date or ""
-            ),
-
-            "end_date": (
-                end_date or ""
-            ),
-        },
-    )
+    finally:
+        # ปิด Connection หลังการดึงข้อมูลเสร็จสมบูรณ์
+        conn.close()
 
 
 # ==========================================
@@ -313,159 +158,65 @@ def export_excel(
     selected_month: Optional[str] = Query(None),
 ):
 
-    # ==========================================
-    # ตรวจสอบ Scope
-    # ==========================================
-
-    valid_scopes = {
-        "all",
-        "personal",
-        "work",
-    }
-
+    valid_scopes = {"all", "personal", "work"}
     if scope not in valid_scopes:
-
         scope = "all"
 
-    # ==========================================
-    # ตรวจสอบประเภทรายงาน
-    # ==========================================
-
-    if period not in {
-        "daily",
-        "monthly",
-    }:
-
+    if period not in {"daily", "monthly"}:
         period = "daily"
 
-    # ==========================================
-    # กำหนดช่วงวันที่จากเดือนที่เลือก
-    # ==========================================
-
     if period == "monthly":
-
         current_time = datetime.now(tz_thai)
 
-        # ถ้าไม่ได้ส่งเดือนมา
-        # จึงค่อยใช้เดือนปัจจุบัน
         if not selected_month:
-
-            selected_month = current_time.strftime(
-                "%Y-%m"
-            )
+            selected_month = current_time.strftime("%Y-%m")
 
         try:
-
-            # รับค่ารูปแบบ เช่น 2026-08
-            selected_month_date = datetime.strptime(
-                selected_month,
-                "%Y-%m"
-            )
-
+            selected_month_date = datetime.strptime(selected_month, "%Y-%m")
             year = selected_month_date.year
             month = selected_month_date.month
-
-        except (
-            ValueError,
-            TypeError,
-        ):
-
-            # ถ้ารูปแบบเดือนไม่ถูกต้อง
-            # ให้ใช้เดือนปัจจุบัน
+        except (ValueError, TypeError):
             year = current_time.year
             month = current_time.month
+            selected_month = current_time.strftime("%Y-%m")
 
-            selected_month = current_time.strftime(
-                "%Y-%m"
-            )
-
-        # หาวันสุดท้ายของเดือน
-        last_day = monthrange(
-            year,
-            month
-        )[1]
-
-        # วันที่เริ่มต้นของเดือน
-        start_date = (
-            f"{year:04d}-{month:02d}-01"
-        )
-
-        # วันที่สิ้นสุดของเดือน
-        end_date = (
-            f"{year:04d}-{month:02d}-"
-            f"{last_day:02d}"
-        )
-
-    # ==========================================
-    # ถ้าเลือกวันเดียว
-    # ==========================================
+        last_day = monthrange(year, month)[1]
+        start_date = f"{year:04d}-{month:02d}-01"
+        end_date = f"{year:04d}-{month:02d}-{last_day:02d}"
 
     if start_date and not end_date:
-
         end_date = start_date
 
-    # ==========================================
-    # ดึงข้อมูล
-    # ==========================================
+    # --------------------------------------
+    # ดึงข้อมูลผ่าน Connection เดียว
+    # --------------------------------------
+    conn = get_db_connection()
+    try:
+        summary = get_account_summary(
+            selected_scope=scope,
+            start_date=start_date,
+            end_date=end_date,
+            transaction_limit=None,
+            conn=conn
+        )
+    finally:
+        conn.close()
 
-    summary = get_account_summary(
-    selected_scope=scope,
-    start_date=start_date,
-    end_date=end_date,
-    transaction_limit=None
-)
-
-
-    # กำหนด transactions ก่อนนำไปใช้
-    transactions = summary.get(
-        "transactions",
-        []
-    )
-
-    # ป้องกันกรณี transactions เป็น None
-    if transactions is None:
-
-        transactions = []
-
-    # ==========================================
-    # จัดรูปแบบข้อมูล Excel
-    # ==========================================
+    transactions = summary.get("transactions", []) or []
 
     formatted_data = []
-
     for item in transactions:
-
         formatted_data.append(
             {
                 "ID": item[0],
-
                 "รายการ": item[1],
-
-                "ประเภท": (
-                    "รายรับ"
-                    if item[2] == "income"
-                    else "รายจ่าย"
-                ),
-
-                "จำนวนเงิน (บาท)": float(
-                    item[3]
-                ),
-
+                "ประเภท": ("รายรับ" if item[2] == "income" else "รายจ่าย"),
+                "จำนวนเงิน (บาท)": float(item[3]),
                 "หมวดหมู่": item[4],
-
                 "วัน-เวลา": item[5],
-
-                "บัญชี": (
-                    "งาน/ร้านค้า"
-                    if item[6] == "work"
-                    else "ชีวิตประจำวัน"
-                ),
+                "บัญชี": ("งาน/ร้านค้า" if item[6] == "work" else "ชีวิตประจำวัน"),
             }
         )
-
-    # ==========================================
-    # สร้าง DataFrame
-    # ==========================================
 
     excel_columns = [
         "ID",
@@ -477,79 +228,28 @@ def export_excel(
         "บัญชี",
     ]
 
-    df = pd.DataFrame(
-        formatted_data,
-        columns=excel_columns
-    )
-
-    # ==========================================
-    # สร้าง Excel ใน Memory
-    # ==========================================
+    df = pd.DataFrame(formatted_data, columns=excel_columns)
 
     output = io.BytesIO()
-
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
-
-        df.to_excel(
-            writer,
-            index=False,
-            sheet_name="Summary_Report"
-        )
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Summary_Report")
 
     output.seek(0)
 
-    # ==========================================
-    # ชื่อไฟล์
-    # ==========================================
-
     if period == "monthly" and selected_month:
-
-        safe_selected_month = (
-            selected_month.replace(
-                "/",
-                "-"
-            )
-        )
-
-        filename = (
-            f"account_report_{scope}_"
-            f"monthly_{safe_selected_month}.xlsx"
-        )
-
+        safe_selected_month = selected_month.replace("/", "-")
+        filename = f"account_report_{scope}_monthly_{safe_selected_month}.xlsx"
     else:
-
-        filename = (
-            f"account_report_{scope}_"
-            f"{datetime.now(tz_thai).strftime('%Y%m%d_%H%M')}"
-            f".xlsx"
-        )
-
-    # ==========================================
-    # HEADERS สำหรับดาวน์โหลดไฟล์
-    # จุดนี้คือส่วนที่หายไปและทำให้ Error 500
-    # ==========================================
+        filename = f"account_report_{scope}_{datetime.now(tz_thai).strftime('%Y%m%d_%H%M')}.xlsx"
 
     headers = {
-        "Content-Disposition": (
-            f'attachment; filename="{filename}"'
-        )
+        "Content-Disposition": f'attachment; filename="{filename}"'
     }
-
-    # ==========================================
-    # RETURN FILE
-    # ==========================================
 
     return StreamingResponse(
         output,
         headers=headers,
-        media_type=(
-            "application/"
-            "vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
-        ),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
@@ -567,33 +267,21 @@ def add_account_item(
     category: str = Form("ทั่วไป"),
     scope: str = Form("personal"),
 ):
-
-    # ==========================================
-    # ตรวจสอบ Scope
-    # ==========================================
-
-    if scope not in {
-        "personal",
-        "work",
-    }:
-
+    if scope not in {"personal", "work"}:
         scope = "personal"
 
-    # ==========================================
-    # เพิ่มข้อมูล
-    # ==========================================
-
-    add_transaction(
-        title=title,
-        trans_type=type,
-        amount=amount,
-        category=category,
-        scope=scope
-    )
-
-    # ==========================================
-    # Redirect
-    # ==========================================
+    conn = get_db_connection()
+    try:
+        add_transaction(
+            title=title,
+            trans_type=type,
+            amount=amount,
+            category=category,
+            scope=scope,
+            conn=conn
+        )
+    finally:
+        conn.close()
 
     return RedirectResponse(
         url=f"/account?scope={scope}",
@@ -612,36 +300,17 @@ def delete_account_item(
     trans_id: int,
     current_scope: str = Form("all"),
 ):
-
-    # ==========================================
-    # ตรวจสอบ Scope
-    # ==========================================
-
-    if current_scope not in {
-        "all",
-        "personal",
-        "work",
-    }:
-
+    if current_scope not in {"all", "personal", "work"}:
         current_scope = "all"
 
-    # ==========================================
-    # ลบข้อมูล
-    # ==========================================
-
-    delete_transaction(
-        trans_id
-    )
-
-    # ==========================================
-    # Redirect
-    # ==========================================
+    conn = get_db_connection()
+    try:
+        delete_transaction(trans_id, conn=conn)
+    finally:
+        conn.close()
 
     return RedirectResponse(
-        url=(
-            f"/account?"
-            f"scope={current_scope}"
-        ),
+        url=f"/account?scope={current_scope}",
         status_code=status.HTTP_303_SEE_OTHER
     )
 
@@ -662,52 +331,28 @@ def update_account_item(
     scope: str = Form("personal"),
     current_scope: str = Form("all"),
 ):
-
-    # ==========================================
-    # ตรวจสอบ Scope ของรายการ
-    # ==========================================
-
-    if scope not in {
-        "personal",
-        "work",
-    }:
-
+    if scope not in {"personal", "work"}:
         scope = "personal"
 
-    # ==========================================
-    # ตรวจสอบ Scope หน้าปัจจุบัน
-    # ==========================================
-
-    if current_scope not in {
-        "all",
-        "personal",
-        "work",
-    }:
-
+    if current_scope not in {"all", "personal", "work"}:
         current_scope = "all"
 
-    # ==========================================
-    # แก้ไขข้อมูล
-    # ==========================================
-
-    update_transaction(
-        trans_id=trans_id,
-        title=title,
-        trans_type=type,
-        amount=amount,
-        category=category,
-        scope=scope
-    )
-
-    # ==========================================
-    # Redirect
-    # ==========================================
+    conn = get_db_connection()
+    try:
+        update_transaction(
+            trans_id=trans_id,
+            title=title,
+            trans_type=type,
+            amount=amount,
+            category=category,
+            scope=scope,
+            conn=conn
+        )
+    finally:
+        conn.close()
 
     return RedirectResponse(
-        url=(
-            f"/account?"
-            f"scope={current_scope}"
-        ),
+        url=f"/account?scope={current_scope}",
         status_code=status.HTTP_303_SEE_OTHER
     )
 
@@ -720,17 +365,13 @@ def update_account_item(
     "/api/account/clear-work-income"
 )
 def clear_work_income_route():
-
+    conn = get_db_connection()
     try:
-
-        clear_work_income()
-
+        clear_work_income(conn=conn)
     except Exception as e:
-
-        print(
-            "Error clearing work income:",
-            e
-        )
+        print("Error clearing work income:", e)
+    finally:
+        conn.close()
 
     return RedirectResponse(
         url="/account?scope=work",
