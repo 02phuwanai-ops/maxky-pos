@@ -353,8 +353,10 @@ def build_account_conditions(
 def get_account_summary(
     selected_scope: str = "all",
     start_date: str = None,
-    end_date: str = None
+    end_date: str = None,
+    transaction_limit=20
 ):
+
     """
     ดึงข้อมูลสรุปรายรับ-รายจ่าย
 
@@ -433,6 +435,29 @@ def get_account_summary(
             # 2. ประวัติรายการ
             # ==========================================
 
+            # คัดลอก params เพื่อไม่ให้กระทบ Query อื่น
+            transaction_params = list(params)
+
+            limit_clause = ""
+
+            # หน้าเว็บใช้ค่าเริ่มต้น 20
+            # Export ส่ง transaction_limit=None เพื่อไม่จำกัด
+            if transaction_limit is not None:
+
+                transaction_limit = int(
+                    transaction_limit
+                )
+
+                # ป้องกันค่าติดลบหรือศูนย์
+                if transaction_limit < 1:
+                    transaction_limit = 20
+
+                limit_clause = "LIMIT %s"
+
+                transaction_params.append(
+                    transaction_limit
+                )
+
             transaction_sql = f"""
                 SELECT
                     id,
@@ -445,12 +470,12 @@ def get_account_summary(
                 FROM transactions
                 {where_clause}
                 ORDER BY created_at DESC, id DESC
-                LIMIT 20
+                {limit_clause}
             """
 
             cursor.execute(
                 transaction_sql,
-                params
+                transaction_params
             )
 
             rows = cursor.fetchall()

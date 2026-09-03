@@ -54,6 +54,7 @@
 
 .action-tools {
     display: flex;
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
@@ -108,12 +109,22 @@
     background-color: #05b34c !important;
 }
 
+/* Section Header Container */
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
 /* Section Title */
 .section-title {
     font-size: 15px;
     font-weight: 700;
     color: #4b5563;
-    margin: 0 0 12px 0;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -562,10 +573,20 @@
         align-items: stretch;
     }
 
-    .filter-tabs,
-    .action-tools {
+    .filter-tabs {
         width: 100%;
         justify-content: space-between;
+    }
+
+    .section-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .action-tools {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .tab-btn {
@@ -717,6 +738,494 @@
         border-radius: 8px;
     }
 }
+
+/* ==========================================================
+   PREMIUM REDESIGN v2
+   - ไม่ลบ/ไม่แก้ HTML, Jinja หรือ JavaScript เดิม
+   - ปรับเฉพาะ CSS ให้ดูเป็น Premium / Clean / Balanced
+   - ปุ่ม Export Excel + LINE ลดขนาดและไม่กินพื้นที่
+   ========================================================== */
+
+:root {
+    --p-bg: #f4f6f8;
+    --p-surface: #ffffff;
+    --p-border: #e3e7ec;
+    --p-border-strong: #d5dbe3;
+    --p-text: #17212b;
+    --p-muted: #6b7682;
+    --p-dark: #26323f;
+    --p-accent: #2f6fed;
+    --p-accent-soft: #eef4ff;
+    --p-success: #16866a;
+    --p-success-soft: #edf8f4;
+    --p-danger: #d95c62;
+    --p-danger-soft: #fff2f3;
+    --p-shadow: 0 8px 24px rgba(25, 35, 45, 0.06);
+    --p-shadow-sm: 0 3px 12px rgba(25, 35, 45, 0.045);
+}
+
+/* ---------- Base ---------- */
+body {
+    background: var(--p-bg) !important;
+}
+
+.container {
+    max-width: 1120px !important;
+    margin: 22px auto !important;
+    padding: 0 18px !important;
+    color: var(--p-text);
+}
+
+/* ---------- Header ---------- */
+.header-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%) !important;
+    padding: 22px 24px !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--p-shadow) !important;
+}
+
+.header-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #26323f;
+    border-radius: 16px 0 0 16px;
+}
+
+.header-card h1 {
+    color: #202b36 !important;
+    font-size: 22px !important;
+    letter-spacing: -0.2px;
+}
+
+.header-card p {
+    color: #77828e !important;
+    font-size: 12px !important;
+}
+
+/* ---------- Main toolbar / tabs ---------- */
+.toolbar-container {
+    margin-bottom: 18px !important;
+    padding: 4px 0;
+}
+
+.filter-tabs {
+    gap: 6px !important;
+}
+
+.filter-tabs .tab-btn {
+    background: #fff !important;
+    color: #56616d !important;
+    border: 1px solid var(--p-border) !important;
+    box-shadow: none !important;
+    border-radius: 9px !important;
+    padding: 7px 12px !important;
+    font-size: 12px !important;
+}
+
+.filter-tabs .tab-btn.active {
+    background: #26323f !important;
+    color: #fff !important;
+    border-color: #26323f !important;
+    box-shadow: 0 4px 10px rgba(38, 50, 63, .14) !important;
+}
+
+/* ---------- Export / LINE : compact utility buttons ---------- */
+.section-header-row .action-tools {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    margin-left: auto !important;
+}
+
+.section-header-row .action-tools .tab-btn,
+.section-header-row .action-tools .btn-export,
+.section-header-row .action-tools .btn-line {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 4px 9px !important;
+    border-radius: 7px !important;
+    font-size: 10.5px !important;
+    line-height: 1 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Export = neutral premium */
+.section-header-row .action-tools .btn-export {
+    background: #26323f !important;
+    color: #fff !important;
+    border: 1px solid #26323f !important;
+}
+
+.section-header-row .action-tools .btn-export:hover {
+    background: #1d2731 !important;
+    border-color: #1d2731 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* LINE = subtle, ไม่ใช้เขียวสดทั้งก้อน */
+.section-header-row .action-tools .btn-line {
+    background: #fff !important;
+    color: #3f4a55 !important;
+    border: 1px solid #cfd6de !important;
+}
+
+.section-header-row .action-tools .btn-line:hover {
+    background: #f4f7f9 !important;
+    border-color: #aeb8c2 !important;
+    color: #202b36 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ---------- Section headers ---------- */
+.section-header-row {
+    margin-bottom: 10px !important;
+    gap: 8px !important;
+}
+
+.section-title {
+    color: #303c48 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: .05px;
+}
+
+/* ---------- History filter ---------- */
+.history-filter-panel {
+    background: rgba(255,255,255,.96) !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 14px !important;
+    padding: 15px 16px !important;
+    margin-bottom: 18px !important;
+    box-shadow: var(--p-shadow-sm) !important;
+}
+
+.history-filter-header {
+    margin-bottom: 12px !important;
+}
+
+.history-filter-title {
+    color: #303c48 !important;
+    font-size: 13px !important;
+}
+
+.history-filter-form label {
+    color: #697582 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+.history-filter-grid {
+    gap: 14px !important;
+}
+
+.history-filter-form:first-child {
+    padding-right: 14px !important;
+    border-right: 1px solid #e7ebef !important;
+}
+
+.date-input-wrapper {
+    border-color: #d9dfe6 !important;
+    background: #fafbfc !important;
+    border-radius: 8px !important;
+}
+
+.history-filter-control input {
+    color: #35414d !important;
+    font-size: 12px !important;
+}
+
+.btn-search-date {
+    background: #26323f !important;
+    border-color: #26323f !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.btn-search-date:hover {
+    background: #1d2731 !important;
+}
+
+.btn-reset-history {
+    background: #f7f8fa !important;
+    color: #66717c !important;
+    border-color: #e0e4e9 !important;
+    font-size: 10.5px !important;
+    border-radius: 7px !important;
+}
+
+/* ---------- Summary cards ---------- */
+.cards-grid {
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+}
+
+.card-box {
+    background: #fff !important;
+    padding: 17px 14px !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--p-shadow-sm) !important;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.card-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 22px rgba(25,35,45,.08) !important;
+}
+
+.card-box h3 {
+    color: #7a8590 !important;
+    font-size: 11px !important;
+    margin-bottom: 7px !important;
+}
+
+.card-box p {
+    font-size: 22px !important;
+    letter-spacing: -.3px;
+}
+
+.card-box .inc {
+    color: var(--p-success) !important;
+}
+
+.card-box .exp {
+    color: var(--p-danger) !important;
+}
+
+.card-box .bal {
+    color: var(--p-accent) !important;
+}
+
+/* ---------- Form / chart panels ---------- */
+.content-grid {
+    gap: 14px !important;
+    margin-bottom: 22px !important;
+}
+
+.panel {
+    background: #fff !important;
+    padding: 18px !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--p-shadow-sm) !important;
+}
+
+.panel h2 {
+    color: #303c48 !important;
+    font-size: 13px !important;
+    margin-bottom: 15px !important;
+}
+
+.form-group {
+    margin-bottom: 12px !important;
+}
+
+.form-group label {
+    color: #697582 !important;
+    font-size: 11px !important;
+}
+
+.form-group input,
+.form-group select {
+    border-color: #d9dfe6 !important;
+    background: #fbfcfd !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none !important;
+    border-color: #9bb8ef !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgba(47,111,237,.08) !important;
+}
+
+.btn-submit {
+    background: #26323f !important;
+    border-radius: 8px !important;
+    padding: 9px !important;
+    font-size: 12px !important;
+    box-shadow: none !important;
+}
+
+.btn-submit:hover {
+    background: #1d2731 !important;
+}
+
+/* ---------- Table ---------- */
+.table-responsive {
+    border: 1px solid #e7ebef;
+    border-radius: 11px;
+    overflow-x: auto;
+    background: #fff;
+}
+
+.table-desktop {
+    border: 0 !important;
+}
+
+.table-desktop th {
+    background: #f7f8fa !important;
+    color: #697582 !important;
+    border-bottom: 1px solid #e4e8ed !important;
+    font-size: 10px !important;
+}
+
+.table-desktop td {
+    color: #45515d !important;
+    border-bottom-color: #edf0f3 !important;
+    font-size: 10.5px !important;
+}
+
+.table-desktop tr:last-child td {
+    border-bottom: 0 !important;
+}
+
+/* ---------- Modal ---------- */
+.modal-content,
+.modal-box {
+    border: 1px solid var(--p-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 20px 50px rgba(20,30,40,.16) !important;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 768px) {
+
+    .container {
+        margin: 12px auto !important;
+        padding: 0 10px !important;
+    }
+
+    .header-card {
+        padding: 17px 15px !important;
+        margin-bottom: 16px !important;
+        border-radius: 13px !important;
+    }
+
+    .header-card h1 {
+        font-size: 18px !important;
+    }
+
+    .toolbar-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .filter-tabs {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .filter-tabs .tab-btn {
+        flex: 0 0 auto !important;
+    }
+
+    .section-header-row {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .section-header-row .action-tools {
+        width: auto !important;
+        margin-left: auto !important;
+        justify-content: flex-end !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .section-header-row .action-tools .tab-btn,
+    .section-header-row .action-tools .btn-export,
+    .section-header-row .action-tools .btn-line {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        padding: 3px 7px !important;
+        font-size: 9px !important;
+        border-radius: 6px !important;
+    }
+
+    .history-filter-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .history-filter-form:first-child {
+        padding-right: 0 !important;
+        padding-bottom: 12px !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid #e7ebef !important;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    .card-box {
+        padding: 13px 6px !important;
+        border-radius: 11px !important;
+    }
+
+    .card-box h3 {
+        font-size: 9px !important;
+        margin-bottom: 5px !important;
+    }
+
+    .card-box p {
+        font-size: 16px !important;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .panel {
+        padding: 14px !important;
+        border-radius: 12px !important;
+    }
+}
+
+@media (max-width: 430px) {
+    .section-title {
+        font-size: 11px !important;
+    }
+
+    .section-header-row .action-tools .tab-btn,
+    .section-header-row .action-tools .btn-export,
+    .section-header-row .action-tools .btn-line {
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 3px 6px !important;
+        font-size: 8.5px !important;
+    }
+
+    .card-box p {
+        font-size: 14px !important;
+    }
+}
+
 </style>
 
 <div class="container">
@@ -729,15 +1238,9 @@
 
     <!-- Toolbar -->
     <div class="toolbar-container">
-
         <div class="filter-tabs">
-            <a href="/account?scope=all"
-               class="tab-btn {% if summary.selected_scope == 'all' %}active{% endif %}">
-                🌐 ทั้งหมด
-            </a>
-
             <a href="/account?scope=personal"
-               class="tab-btn {% if summary.selected_scope == 'personal' %}active{% endif %}">
+               class="tab-btn {% if summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}active{% endif %}">
                 👤 ชีวิตประจำวัน
             </a>
 
@@ -746,29 +1249,15 @@
                 🏢 งาน / ร้านค้า
             </a>
         </div>
-
-        <div class="action-tools">
-            <a href="/api/account/export-excel?scope={{ summary.selected_scope }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"
-               class="tab-btn btn-export">
-                📥 Export Excel
-            </a>
-
-            <button type="button"
-                    onclick="sendSummaryToLine()"
-                    class="tab-btn btn-line">
-                💬 ส่งสรุปเข้า LINE
-            </button>
-        </div>
-
     </div>
 
 
     <!-- ==========================================
          ดูข้อมูลย้อนหลัง: Personal / Work
          ========================================== -->
-    {% if summary.selected_scope == 'personal' or summary.selected_scope == 'work' %}
+    {% if summary.selected_scope == 'personal' or summary.selected_scope == 'work' or summary.selected_scope == 'all' %}
 
-    {% set is_personal = summary.selected_scope == 'personal' %}
+    {% set is_personal = summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}
 
     <div class="history-filter-panel">
 
@@ -869,42 +1358,72 @@
     {% endif %}
 
 
-    <!-- Summary Cards -->
-    <div class="section-title">
-        {% if summary.selected_scope == 'personal' %}
-            ☀️ ยอดตัดรอบวันนี้ (Daily)
-        {% elif summary.selected_scope == 'work' %}
-            🏢 ยอดสรุปงาน / ร้านค้า
-        {% else %}
-            📊 ยอดรวมสะสม
-        {% endif %}
+    <!-- Summary Cards (รายวัน) -->
+    <div class="section-header-row">
+        <div class="section-title">
+            {% if summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}
+                ☀️ ยอดตัดรอบวันนี้ (Daily) {% if start_date %}(ประจำวันที่ {{ start_date }}){% endif %}
+            {% elif summary.selected_scope == 'work' %}
+                🏢 ยอดสรุปงาน / ร้านค้า {% if start_date %}(ประจำวันที่ {{ start_date }}){% endif %}
+            {% else %}
+                📊 ยอดรวมสะสม
+            {% endif %}
+        </div>
+
+        <!-- ปุ่ม Export & LINE สำหรับรายวัน -->
+        <div class="action-tools">
+            <a href="/api/account/export-excel?scope={{ summary.selected_scope }}&period=daily{% if start_date %}&start_date={{ start_date }}{% endif %}"
+               class="tab-btn btn-export">
+                📥 Export Excel
+            </a>
+            <button type="button"
+                    onclick="sendSummaryToLine('daily')"
+                    class="tab-btn btn-line">
+                💬 ส่งสรุปเข้า LINE
+            </button>
+        </div>
     </div>
 
     <div class="cards-grid">
 
         <div class="card-box">
-            <h3>รายรับ{% if summary.selected_scope == 'personal' %}วันนี้{% else %}รวม{% endif %}</h3>
+            <h3>รายรับ{% if summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}วันนี้{% else %}รวม{% endif %}</h3>
             <p class="inc">฿{{ "%.2f"|format(summary.income) }}</p>
         </div>
 
         <div class="card-box">
-            <h3>รายจ่าย{% if summary.selected_scope == 'personal' %}วันนี้{% else %}รวม{% endif %}</h3>
+            <h3>รายจ่าย{% if summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}วันนี้{% else %}รวม{% endif %}</h3>
             <p class="exp">฿{{ "%.2f"|format(summary.expense) }}</p>
         </div>
 
         <div class="card-box">
-            <h3>คงเหลือ{% if summary.selected_scope == 'personal' %}วันนี้{% endif %}</h3>
+            <h3>คงเหลือ{% if summary.selected_scope == 'personal' or summary.selected_scope == 'all' %}วันนี้{% endif %}</h3>
             <p class="bal">฿{{ "%.2f"|format(summary.balance) }}</p>
         </div>
 
     </div>
 
 
-    <!-- Monthly Summary -->
-    {% if (summary.selected_scope == 'personal' or summary.selected_scope == 'work') and monthly_summary %}
+    <!-- Monthly Summary (รายเดือน) -->
+    {% if (summary.selected_scope == 'personal' or summary.selected_scope == 'work' or summary.selected_scope == 'all') and monthly_summary %}
 
-    <div class="section-title">
-        🗓️ ยอดรวมประจำเดือน ({{ selected_month }})
+    <div class="section-header-row" style="margin-top: 25px;">
+        <div class="section-title">
+            🗓️ ยอดรวมประจำเดือน ({{ selected_month }})
+        </div>
+
+        <!-- ปุ่ม Export & LINE สำหรับรายเดือน -->
+        <div class="action-tools">
+            <a href="/api/account/export-excel?scope={{ summary.selected_scope }}&period=monthly{% if selected_month %}&selected_month={{ selected_month }}{% endif %}"
+               class="tab-btn btn-export">
+                📥 Export Excel
+            </a>
+            <button type="button"
+                    onclick="sendSummaryToLine('monthly')"
+                    class="tab-btn btn-line">
+                💬 ส่งสรุปเข้า LINE
+            </button>
+        </div>
     </div>
 
     <div class="cards-grid" style="margin-bottom: 30px;">
@@ -1369,46 +1888,50 @@
 
 <script>
 
-/* ส่งสรุปเข้า LINE */
-function sendSummaryToLine() {
+/* ส่งสรุปเข้า LINE แยกประเภทรายวัน / รายเดือน */
+function sendSummaryToLine(period) {
 
     const scope = "{{ summary.selected_scope }}";
 
     const scopeName =
-        scope === 'all'
-            ? 'ทั้งหมด'
-            : (
-                scope === 'personal'
-                    ? 'ชีวิตประจำวัน'
-                    : 'งาน / ร้านค้า'
-            );
+        scope === 'work'
+            ? 'งาน / ร้านค้า'
+            : 'ชีวิตประจำวัน';
 
-    const income = Number(
-        "{{ summary.income or 0 }}"
-    ).toLocaleString(
-        'th-TH',
-        {
-            minimumFractionDigits: 2
-        }
-    );
+    const periodName =
+        period === 'monthly'
+            ? 'รายเดือน'
+            : 'รายวัน';
 
-    const expense = Number(
-        "{{ summary.expense or 0 }}"
-    ).toLocaleString(
-        'th-TH',
-        {
-            minimumFractionDigits: 2
-        }
-    );
+    let incomeVal = 0;
+    let expenseVal = 0;
+    let balanceVal = 0;
+    let periodLabel = "";
 
-    const balance = Number(
-        "{{ summary.balance or 0 }}"
-    ).toLocaleString(
-        'th-TH',
-        {
-            minimumFractionDigits: 2
+    const startDateParam = "{{ start_date or '' }}";
+    const selectedMonthParam = "{{ selected_month or '' }}";
+
+    if (period === 'monthly') {
+        incomeVal = Number("{{ monthly_summary.income or 0 }}");
+        expenseVal = Number("{{ monthly_summary.expense or 0 }}");
+        balanceVal = Number("{{ monthly_summary.balance or 0 }}");
+        
+        if (selectedMonthParam) {
+            periodLabel = ` (ประจำเดือน: ${selectedMonthParam})`;
         }
-    );
+    } else {
+        incomeVal = Number("{{ summary.income or 0 }}");
+        expenseVal = Number("{{ summary.expense or 0 }}");
+        balanceVal = Number("{{ summary.balance or 0 }}");
+        
+        if (startDateParam) {
+            periodLabel = ` (ประจำวันที่: ${startDateParam})`;
+        }
+    }
+
+    const income = incomeVal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    const expense = expenseVal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    const balance = balanceVal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
 
     const now = new Date();
 
@@ -1424,12 +1947,12 @@ function sendSummaryToLine() {
         );
 
     const message =
-`📊 สรุปยอดบัญชี (${scopeName})
+`📊 สรุปยอดบัญชี (${scopeName} - ${periodName}${periodLabel})
 🟢 รายรับรวม: ฿${income}
 🔴 รายจ่ายรวม: ฿${expense}
 💰 คงเหลือสุทธิ: ฿${balance}
 -------------------
-⏰ ข้อมูล ณ วันที่: ${dateStr}`;
+⏰ ส่งข้อมูลเมื่อ: ${dateStr}`;
 
     const lineUrl =
         `https://line.me/R/share?text=${encodeURIComponent(message)}`;

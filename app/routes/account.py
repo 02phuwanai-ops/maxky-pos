@@ -134,9 +134,17 @@ def account_page(
                 selected_month.split("-")
             )
 
+            # ตรวจสอบว่าเดือนและปีถูกต้องจริง
+            datetime(
+                year=year,
+                month=month,
+                day=1
+            )
+
         except (
             ValueError,
-            AttributeError
+            AttributeError,
+            TypeError,
         ):
 
             year = current_time.year
@@ -301,6 +309,8 @@ def export_excel(
     scope: str = Query("all"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    period: str = Query("daily"),
+    selected_month: Optional[str] = Query(None),
 ):
 
     # ==========================================
@@ -318,6 +328,75 @@ def export_excel(
         scope = "all"
 
     # ==========================================
+    # ตรวจสอบประเภทรายงาน
+    # ==========================================
+
+    if period not in {
+        "daily",
+        "monthly",
+    }:
+
+        period = "daily"
+
+    # ==========================================
+    # กำหนดช่วงวันที่จากเดือนที่เลือก
+    # ==========================================
+
+    if period == "monthly":
+
+        current_time = datetime.now(tz_thai)
+
+        # ถ้าไม่ได้ส่งเดือนมา
+        # จึงค่อยใช้เดือนปัจจุบัน
+        if not selected_month:
+
+            selected_month = current_time.strftime(
+                "%Y-%m"
+            )
+
+        try:
+
+            # รับค่ารูปแบบ เช่น 2026-08
+            selected_month_date = datetime.strptime(
+                selected_month,
+                "%Y-%m"
+            )
+
+            year = selected_month_date.year
+            month = selected_month_date.month
+
+        except (
+            ValueError,
+            TypeError,
+        ):
+
+            # ถ้ารูปแบบเดือนไม่ถูกต้อง
+            # ให้ใช้เดือนปัจจุบัน
+            year = current_time.year
+            month = current_time.month
+
+            selected_month = current_time.strftime(
+                "%Y-%m"
+            )
+
+        # หาวันสุดท้ายของเดือน
+        last_day = monthrange(
+            year,
+            month
+        )[1]
+
+        # วันที่เริ่มต้นของเดือน
+        start_date = (
+            f"{year:04d}-{month:02d}-01"
+        )
+
+        # วันที่สิ้นสุดของเดือน
+        end_date = (
+            f"{year:04d}-{month:02d}-"
+            f"{last_day:02d}"
+        )
+
+    # ==========================================
     # ถ้าเลือกวันเดียว
     # ==========================================
 
@@ -330,17 +409,23 @@ def export_excel(
     # ==========================================
 
     summary = get_account_summary(
-        selected_scope=scope,
-        start_date=start_date,
-        end_date=end_date
-    )
+    selected_scope=scope,
+    start_date=start_date,
+    end_date=end_date,
+    transaction_limit=None
+)
 
-    # สำคัญ:
+
     # กำหนด transactions ก่อนนำไปใช้
     transactions = summary.get(
         "transactions",
         []
     )
+
+    # ป้องกันกรณี transactions เป็น None
+    if transactions is None:
+
+        transactions = []
 
     # ==========================================
     # จัดรูปแบบข้อมูล Excel
@@ -382,8 +467,19 @@ def export_excel(
     # สร้าง DataFrame
     # ==========================================
 
+    excel_columns = [
+        "ID",
+        "รายการ",
+        "ประเภท",
+        "จำนวนเงิน (บาท)",
+        "หมวดหมู่",
+        "วัน-เวลา",
+        "บัญชี",
+    ]
+
     df = pd.DataFrame(
-        formatted_data
+        formatted_data,
+        columns=excel_columns
     )
 
     # ==========================================
@@ -409,11 +505,32 @@ def export_excel(
     # ชื่อไฟล์
     # ==========================================
 
-    filename = (
-        f"account_report_{scope}_"
-        f"{datetime.now(tz_thai).strftime('%Y%m%d_%H%M')}"
-        f".xlsx"
-    )
+    if period == "monthly" and selected_month:
+
+        safe_selected_month = (
+            selected_month.replace(
+                "/",
+                "-"
+            )
+        )
+
+        filename = (
+            f"account_report_{scope}_"
+            f"monthly_{safe_selected_month}.xlsx"
+        )
+
+    else:
+
+        filename = (
+            f"account_report_{scope}_"
+            f"{datetime.now(tz_thai).strftime('%Y%m%d_%H%M')}"
+            f".xlsx"
+        )
+
+    # ==========================================
+    # HEADERS สำหรับดาวน์โหลดไฟล์
+    # จุดนี้คือส่วนที่หายไปและทำให้ Error 500
+    # ==========================================
 
     headers = {
         "Content-Disposition": (
