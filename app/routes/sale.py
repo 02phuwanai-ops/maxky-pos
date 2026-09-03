@@ -1,23 +1,24 @@
-from fastapi import APIRouter, Request, Query, BackgroundTasks
+import io
+from typing import List, Optional
+
+from fastapi import APIRouter, BackgroundTasks, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import List, Optional
 
+from app.database.account_db import add_transaction, delete_last_work_transaction
 from app.database.product_db import get_product_price, get_sale_products
-from app.database.stock_db import reduce_stock, increase_stock, get_stock
 from app.database.recent_sale_db import get_recent_sales
 from app.database.sales_db import (
     add_sale,
-    get_last_sale,
-    delete_sale,
-    get_shift_sales_summary,
     close_current_shift,
+    delete_sale,
+    get_last_sale,
+    get_shift_sales_summary,
     today_sales_count,
-    today_sales_revenue
+    today_sales_revenue,
 )
-
-from app.database.account_db import add_transaction
+from app.database.stock_db import get_stock, increase_stock, reduce_stock
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -42,7 +43,7 @@ class ShiftRequest(BaseModel):
     station_name: Optional[str] = "จุดขายที่ 1"
     event_name: Optional[str] = ""
 
-# Helper บันทึกบัญชีเบื้องหลัง (แก้ปัญหาหน่วง 5 วินาที)
+# Helper บันทึกบัญชีเบื้องหลัง
 def _async_add_transaction(title: str, trans_type: str, amount: float, category: str, scope: str = "work"):
     try:
         add_transaction(
@@ -54,6 +55,13 @@ def _async_add_transaction(title: str, trans_type: str, amount: float, category:
         )
     except Exception as e:
         print(f"Error syncing to Account DB: {e}")
+
+# Helper ลบรายการบัญชีเบื้องหลัง (เมื่อยกเลิกการขาย)
+def _async_delete_transaction(amount: float):
+    try:
+        delete_last_work_transaction(amount=amount)
+    except Exception as e:
+        print(f"Error deleting transaction from Account DB: {e}")
 
 # Helper คำนวณยอดสรุปแบบปลอดภัย
 def _get_safe_summary(station_name: str, event_name: str = ""):
@@ -107,20 +115,16 @@ def _get_safe_summary(station_name: str, event_name: str = ""):
 
 @router.get("/sale", response_class=HTMLResponse)
 def sale_page(request: Request):
-
     try:
         products = get_sale_products()
-
         priority = {
             "เสื้อยืด": 1,
             "เสื้อกีฬา": 2,
             "เสื้อฟอก": 3
         }
-
         products.sort(
             key=lambda p: priority.get(p["name"], 99)
         )
-
     except Exception as e:
         print(f"Error loading products for /sale: {e}")
         products = []
@@ -216,9 +220,9 @@ def api_sell(data: SellRequest, background_tasks: BackgroundTasks):
                 }
 
             processed_items.append({"sale_id": sale_id, "category": category, "size": size, "price": final_price})
-            success_sales.append({"sale_id": sale_id, "category": category, "size": size })
+            success_sales.append({"sale_id": sale_id, "category": category, "size": size})
 
-            # ⚡ โยนงานบันทึกบัญชีลง BackgroundTask ทำให้ตอบกลับทันที (แก้หน่วง 5 วิ)
+            # บันทึกบัญชีรายรับเบื้องหลัง
             background_tasks.add_task(
                 _async_add_transaction,
                 title=f"ขาย POS: {category} ({size}) - {payment_method}",
@@ -227,8 +231,6 @@ def api_sell(data: SellRequest, background_tasks: BackgroundTasks):
                 category="ขายสินค้า",
                 scope="work"
             )
-
-    summary = _get_safe_summary(station_name, event_name)
 
     return {
         "status": "success",
@@ -295,7 +297,6 @@ def undo_sale(background_tasks: BackgroundTasks, data: Optional[ShiftRequest] = 
             "revenue": summary["total_revenue"]
         }
 
-    # 🛠️ ดึงค่าฟิลด์อย่างปลอดภัย ป้องกันคืนสต๊อกผิดไซส์
     if isinstance(last, dict):
         sale_id = last.get("id")
         category = last.get("category")
@@ -320,7 +321,7 @@ def undo_sale(background_tasks: BackgroundTasks, data: Optional[ShiftRequest] = 
             "message": "❌ ข้อมูลรายการขายล่าสุดไม่ถูกต้อง"
         }
 
-    # 1. คืนสต็อกเพียง 1 ครั้ง
+    # 1. คืนสต็อก
     if not increase_stock(category, size):
         return {
             "status": "error",
@@ -339,18 +340,8 @@ def undo_sale(background_tasks: BackgroundTasks, data: Optional[ShiftRequest] = 
             "message": "❌ ไม่สามารถลบรายการขายได้"
         }
 
-    # 3. บันทึกบัญชีเบื้องหลัง (ไม่ดึงเวลาหลัก)
-    if price and float(price) > 0:
-        background_tasks.add_task(
-            _async_add_transaction,
-            title=f"ยกเลิกการขาย: {category} ({size})",
-            trans_type="expense",
-            amount=float(price),
-            category="ยกเลิกการขาย",
-            scope="work"
-        )
-
-    new_summary = _get_safe_summary(station_name, event_name)
+    # 3. ลบรายการรายรับออกจากหน้า งาน/ร้านค้า ทันที
+    delete_last_work_transaction()
 
     return {
         "status": "success",

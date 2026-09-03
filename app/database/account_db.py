@@ -578,3 +578,36 @@ def clear_work_income(conn=None):
     finally:
         if should_close:
             conn.close()
+
+def delete_last_work_transaction(amount: float = None, conn=None):
+    """ลบรายการบัญชีล่าสุดของ scope='work' ออกจากระบบ (ใช้ตอนยกเลิกการขาย)"""
+    should_close = False
+    if conn is None:
+        conn = get_db_connection()
+        should_close = True
+
+    try:
+        with conn.cursor() as cursor:
+            # 1. ดึง ID รายการล่าสุดของ scope 'work'
+            cursor.execute("""
+                SELECT id FROM transactions
+                WHERE scope = 'work'
+                ORDER BY id DESC
+                LIMIT 1
+            """)
+            row = cursor.fetchone()
+            
+            if row:
+                trans_id = row['id'] if isinstance(row, dict) else row[0]
+                
+                # 2. ลบออกจากตารางตรงๆ ด้วย Primary Key (ID)
+                cursor.execute("DELETE FROM transactions WHERE id = %s", (trans_id,))
+                conn.commit()
+                print(f"✅ Deleted transaction ID: {trans_id}")
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"❌ Error deleting transaction: {e}")
+    finally:
+        if should_close and conn:
+            conn.close()
