@@ -1,7 +1,6 @@
-const CACHE_NAME = 'maxky-pos-v3'; // 🟢 เปลี่ยน Version เพื่อ Force Clear Cache
+const CACHE_NAME = 'maxky-pos-v4'; // 🟢 เปลี่ยนเป็น v4 เพื่อลบแคชเดิมทิ้งทันที
 const ASSETS_TO_CACHE = [
   '/',
-  '/sale',
   '/static/manifest.json'
 ];
 
@@ -54,7 +53,7 @@ self.addEventListener('fetch', (event) => {
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           if (event.request.mode === 'navigate') {
-            return caches.match('/sale') || caches.match('/');
+            return caches.match('/'); // 🟢 แก้ให้ดึงหน้าเมนูหลัก '/' เป็นหลัก
           }
         });
       })
