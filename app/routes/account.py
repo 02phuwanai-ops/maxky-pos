@@ -4,6 +4,9 @@ from calendar import monthrange
 from typing import Optional
 
 import pandas as pd
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import (
     HTMLResponse,
@@ -233,6 +236,76 @@ def export_excel(
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Summary_Report")
+        ws = writer.sheets["Summary_Report"]
+
+        # --------------------------------------
+        # 1. ❄️ ล็อกแถวหัวข้อ (Freeze Header Row)
+        # --------------------------------------
+        ws.freeze_panes = "A2"
+        ws.views.sheetView[0].showGridLines = True
+
+        # Styles definition
+        header_font = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+        row_fill_even = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+        
+        align_center = Alignment(horizontal="center", vertical="center")
+        align_left = Alignment(horizontal="left", vertical="center")
+        align_right = Alignment(horizontal="right", vertical="center")
+        
+        thin_border = Border(
+            left=Side(style="thin", color="CBD5E1"),
+            right=Side(style="thin", color="CBD5E1"),
+            top=Side(style="thin", color="CBD5E1"),
+            bottom=Side(style="thin", color="CBD5E1")
+        )
+
+        # --------------------------------------
+        # 2. 🎨 ตกแต่ง Header Row (แถวที่ 1)
+        # --------------------------------------
+        ws.row_dimensions[1].height = 28
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = align_center
+            cell.border = thin_border
+
+        # --------------------------------------
+        # 3. 📝 ตกแต่ง Data Rows (แถวที่ 2 เป็นต้นไป)
+        # --------------------------------------
+        for row_idx in range(2, ws.max_row + 1):
+            ws.row_dimensions[row_idx].height = 22
+            is_even = (row_idx % 2 == 0)
+
+            for col_idx in range(1, ws.max_column + 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.border = thin_border
+                
+                if is_even:
+                    cell.fill = row_fill_even
+
+                col_name = excel_columns[col_idx - 1]
+                if col_name in ["ID", "ประเภท", "วัน-เวลา", "บัญชี"]:
+                    cell.alignment = align_center
+                elif col_name == "จำนวนเงิน (บาท)":
+                    cell.alignment = align_right
+                    cell.number_format = "#,##0.00"
+                else:
+                    cell.alignment = align_left
+
+        # --------------------------------------
+        # 4. 📐 ปรับความกว้างคอลัมน์อัตโนมัติ (Auto Width)
+        # --------------------------------------
+        for col in ws.columns:
+            max_len = 0
+            col_letter = get_column_letter(col[0].column)
+            for cell in col:
+                val_str = str(cell.value or "")
+                # เพิ่มน้ำหนักการคำนวณภาษาไทยเพื่อความแม่นยำ
+                length = sum(2 if ord(char) > 127 else 1 for char in val_str)
+                max_len = max(max_len, length)
+            
+            ws.column_dimensions[col_letter].width = max(max_len + 5, 12)
 
     output.seek(0)
 
