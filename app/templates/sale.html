@@ -1467,6 +1467,9 @@ async function loadRecentSales() {
             return;
         }
 
+        // =========================
+        // จำนวนสินค้าที่ขาย
+        // =========================
         const saleCountEl = document.getElementById("saleCount");
 
         if (saleCountEl) {
@@ -1482,6 +1485,22 @@ async function loadRecentSales() {
             saleCountEl.textContent = countVal;
         }
 
+        // =========================
+        // ยอดขายรวมบน Header (💰 รายได้วันนี้)
+        // =========================
+        const totalRev = data.total_revenue !== undefined ? data.total_revenue : (data.revenue || 0);
+        const formattedRev = Number(totalRev).toLocaleString();
+
+        // 🎯 แนะนำให้ชี้เป้าไปที่ ID ตัวเลขโดยตรงเพื่อป้องกันการซ้อนทับ
+        let headerRevenueEl = document.getElementById("headerRevenue");
+
+        if (headerRevenueEl) {
+            headerRevenueEl.textContent = formattedRev;
+        }
+
+        // =========================
+        // รายการขายล่าสุด
+        // =========================
         const recentContainer = document.getElementById("recent");
         if (!recentContainer) return;
 
