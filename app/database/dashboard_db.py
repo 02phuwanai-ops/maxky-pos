@@ -158,11 +158,11 @@ def init_pos_db():
 
 
 # ==========================================
-# Dashboard
+# Dashboard (รองรับชื่องานและวันที่ย้อนหลังได้แม้ปิดกะแล้ว)
 # ==========================================
 
-def get_dashboard(station_name=None, event_name=None):
-    """ดึงยอดขาย จำนวนชิ้น และกำไรเฉพาะรายการที่ยังไม่ปิดกะ"""
+def get_dashboard(station_name=None, event_name=None, date=None):
+    """ดึงยอดขาย จำนวนชิ้น และกำไร รองรับการดูย้อนหลังแม้ปิดกะแล้ว"""
 
     conn = get_db_connection()
 
@@ -175,48 +175,42 @@ def get_dashboard(station_name=None, event_name=None):
                     IFNULL(SUM(price), 0) AS revenue,
                     IFNULL(SUM(profit), 0) AS profit
                 FROM sales
-                WHERE is_closed = 0
+                WHERE 1=1
             """
 
             params = []
+
+            # ถ้ามีการเลือกชื่องานหรือวันที่ ให้ดึงข้อมูลทั้งหมดของงานนั้น (รวมที่ปิดกะแล้ว)
+            # ถ้าไม่ได้เลือก (หน้า Dashboard ปกติ) ให้ดูเฉพาะที่ยังไม่ปิดกะ (is_closed = 0)
+            if not event_name and not date:
+                query += " AND is_closed = 0"
 
             if station_name:
                 query += " AND station_name = %s"
                 params.append(station_name)
 
             if event_name:
-                query += " AND event_name = %s"
+                query += " AND TRIM(event_name) = TRIM(%s)"
                 params.append(event_name)
 
-            try:
-                cursor.execute(query, tuple(params))
+            if date:
+                query += " AND DATE(created_at) = %s"
+                params.append(date)
 
-            except pymysql.err.OperationalError as e:
-
-                if e.args[0] == 1054:
-
-                    cursor.execute(
-                        "ALTER TABLE sales ADD COLUMN is_closed INT DEFAULT 0;"
-                    )
-
-                    cursor.execute(query, tuple(params))
-
-                else:
-                    raise e
-
+            cursor.execute(query, tuple(params))
             data = cursor.fetchone()
 
         if data:
-
-            cnt = data.get("cnt", 0)
-            revenue = data.get("revenue", 0.0)
-            profit = data.get("profit", 0.0)
-
+            if isinstance(data, dict):
+                cnt = data.get("cnt", 0)
+                revenue = data.get("revenue", 0.0)
+                profit = data.get("profit", 0.0)
+            else:
+                cnt = data[0] or 0
+                revenue = data[1] or 0.0
+                profit = data[2] or 0.0
         else:
-
-            cnt = 0
-            revenue = 0.0
-            profit = 0.0
+            cnt, revenue, profit = 0, 0.0, 0.0
 
         return (
             int(cnt),

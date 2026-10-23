@@ -30,6 +30,51 @@
     gap: 8px;
 }
 
+/* กล่องตั้งค่าตัวกรอง Dashboard */
+.filter-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    text-align: left;
+}
+
+.filter-group {
+    margin-bottom: 12px;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 15px;
+    background: #f8fafc;
+    color: #1e293b;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+    border-color: #6366f1;
+    background: #ffffff;
+}
+
 /* Grid สรุปยอด (Kpi Cards) */
 .kpi-grid {
     display: grid;
@@ -75,7 +120,7 @@
 /* ปุ่มรีเซ็ตยอดขาย */
 .reset-container {
     display: flex;
-    justify-content: center; /* จัดตำแหน่งกรอบให้อยู่กลาง */
+    justify-content: center;
     margin: 12px 0 24px;
 }
 
@@ -91,8 +136,8 @@
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    justify-content: center; /* 👈 เพิ่มบรรทัดนี้เพื่อดึงตัวหนังสือมาตรงกลาง */
-    width: 100%;             /* 👈 เพิ่มบรรทัดนี้เพื่อให้ตัวหนังสืออยู่กลางปุ่มยาว */
+    justify-content: center;
+    width: 100%;
     gap: 6px;
 }
 
@@ -299,24 +344,66 @@
         📊 ภาพรวมระบบ (Dashboard)
     </div>
 
+    <!-- กล่องเลือกชื่องานและวันที่สำหรับดูยอด Dashboard ย้อนหลัง -->
+    <div class="filter-box">
+        <div class="filter-group">
+            <label class="filter-label">🎪 เลือกชื่องาน</label>
+            <select id="dashEventSelect" class="filter-input" onchange="filterDashboard()">
+                <option value="" {% if not selected_event %}selected{% endif %}>-- ทุกงาน --</option>
+                {% for name in event_names %}
+                <option value="{{ name }}" {% if selected_event == name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="filter-label" style="margin-bottom:0;">📅 เลือกวันที่</label>
+                <!-- ปุ่มสลับสำหรับรวมข้อมูลทั้งงาน (จบงาน) -->
+                <button type="button" onclick="setDashboardAllDays()" style="background: #e0e7ff; color: #4338ca; border: none; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; padding: 4px 8px;">
+                    ✨ รวมทุกวัน (จบงาน)
+                </button>
+            </div>
+            <input type="date" id="dashDateInput" class="filter-input" value="{{ selected_date or '' }}" onchange="filterDashboard()">
+        </div>
+    </div>
+
     <!-- 1. สรุปยอด -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-icon">🛍️</div>
             <div class="kpi-number">{{ count }}</div>
-            <div class="kpi-label">ขายวันนี้ (ตัว)</div>
+            <div class="kpi-label">
+                {% if selected_date %}
+                    ขายประจําวันที่ {{ selected_date }} (ตัว)
+                {% else %}
+                    ขายรวมทั้งหมด (ตัว)
+                {% endif %}
+            </div>
         </div>
 
         <div class="kpi-card">
             <div class="kpi-icon">💵</div>
-            <div class="kpi-number">{{ revenue }}</div>
-            <div class="kpi-label">รายได้วันนี้ (บาท)</div>
+            <div class="kpi-number">{{ "{:,.0f}".format(revenue or 0) }}</div>
+            <div class="kpi-label">
+                {% if selected_date %}
+                    รายได้วันที่ {{ selected_date }} (บาท)
+                {% else %}
+                    รายได้รวมทั้งหมด (บาท)
+                {% endif %}
+            </div>
         </div>
 
         <div class="kpi-card">
             <div class="kpi-icon">📈</div>
-            <div class="kpi-number" style="color: #16a34a;">{{ profit }}</div>
-            <div class="kpi-label">กำไรสุทธิ (บาท)</div>
+            <div class="kpi-number" style="color: #16a34a;">{{ "{:,.0f}".format(profit or 0) }}</div>
+            <div class="kpi-label">
+                {% if selected_date %}
+                    กำไรสุทธิวันที่ {{ selected_date }} (บาท)
+                {% else %}
+                    กำไรสุทธิรวมทั้งหมด (บาท)
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -442,6 +529,30 @@
 </div>
 
 <script>
+// กรองข้อมูล Dashboard ตามชื่องานและวันที่
+function filterDashboard() {
+    const eventName = document.getElementById("dashEventSelect").value;
+    const dateVal = document.getElementById("dashDateInput").value;
+
+    let url = "/dashboard?";
+    let params = [];
+
+    if (eventName) {
+        params.push("event_name=" + encodeURIComponent(eventName));
+    }
+    if (dateVal) {
+        params.push("date=" + encodeURIComponent(dateVal));
+    }
+
+    window.location.href = url + params.join("&");
+}
+
+// ตั้งค่าเป็นรวมทุกวัน (จบงาน)
+function setDashboardAllDays() {
+    document.getElementById("dashDateInput").value = "";
+    filterDashboard();
+}
+
 // ลำดับการเรียงไซส์มาตรฐาน
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'FREE', 'FREESIZE'];
 

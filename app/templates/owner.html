@@ -34,7 +34,7 @@ h1 {
     gap: 14px;
 }
 
-.menu a {
+.menu a, .menu .export-card-btn {
     text-decoration: none;
 }
 
@@ -96,6 +96,51 @@ h1 {
     transform: translateX(5px);
 }
 
+/* กล่องตั้งค่าตัวกรอง Export */
+.filter-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    text-align: left;
+}
+
+.filter-group {
+    margin-bottom: 12px;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 15px;
+    background: #f8fafc;
+    color: #1e293b;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+    border-color: #6366f1;
+    background: #ffffff;
+}
+
 /* --- แต่งสีพาสเทลเฉพาะแต่ละปุ่ม --- */
 
 /* 1. Dashboard (Soft Indigo) */
@@ -105,16 +150,16 @@ a[href="/dashboard"] .card:hover .title { color: #4338ca; }
 a[href="/dashboard"] .card:hover .arrow { color: #6366f1; }
 
 /* 2. Export PDF (Soft Amber) */
-a[href="/export/pdf"] .icon { background: #fef3c7; }
-a[href="/export/pdf"] .card:hover { border-color: #fde68a; background: #fffbeb; box-shadow: 0 8px 20px -4px rgba(217, 119, 6, 0.12); }
-a[href="/export/pdf"] .card:hover .title { color: #d97706; }
-a[href="/export/pdf"] .card:hover .arrow { color: #f59e0b; }
+.btn-pdf .icon { background: #fef3c7; }
+.btn-pdf:hover { border-color: #fde68a; background: #fffbeb; box-shadow: 0 8px 20px -4px rgba(217, 119, 6, 0.12); }
+.btn-pdf:hover .title { color: #d97706; }
+.btn-pdf:hover .arrow { color: #f59e0b; }
 
 /* 3. Export Excel (Soft Emerald) */
-a[href="/export/excel"] .icon { background: #d1fae5; }
-a[href="/export/excel"] .card:hover { border-color: #a7f3d0; background: #f0fdf4; box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.12); }
-a[href="/export/excel"] .card:hover .title { color: #059669; }
-a[href="/export/excel"] .card:hover .arrow { color: #10b981; }
+.btn-excel .icon { background: #d1fae5; }
+.btn-excel:hover { border-color: #a7f3d0; background: #f0fdf4; box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.12); }
+.btn-excel:hover .title { color: #059669; }
+.btn-excel:hover .arrow { color: #10b981; }
 
 /* 4. Backup Database (Soft Purple) */
 a[href="/backup"] .icon { background: #f3e8ff; }
@@ -133,6 +178,24 @@ a[href="/logout"] .card:hover .arrow { color: #f43f5e; }
     <h1>👑 MAXKY POS</h1>
     <div class="subtitle">OWNER CONTROL PANEL</div>
 
+    <!-- กล่องเลือกชื่องานและวันที่สำหรับ Export -->
+    <div class="filter-box">
+        <div class="filter-group">
+            <label class="filter-label">🎪 เลือกชื่องาน (สำหรับ Export)</label>
+            <select id="exportEventSelect" class="filter-input">
+                <option value="">-- ทุกงาน --</option>
+                {% for name in event_names %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">📅 เลือกวันที่ (สำหรับ Export)</label>
+            <input type="date" id="exportDateInput" class="filter-input">
+        </div>
+    </div>
+
     <div class="menu">
 
         <!-- 1. Dashboard -->
@@ -147,26 +210,22 @@ a[href="/logout"] .card:hover .arrow { color: #f43f5e; }
         </a>
 
         <!-- 2. Export PDF -->
-        <a href="/export/pdf">
-            <div class="card">
-                <div class="left">
-                    <div class="icon">📄</div>
-                    <div class="title">Export PDF</div>
-                </div>
-                <div class="arrow">➜</div>
+        <div class="card btn-pdf" onclick="doExport('pdf')">
+            <div class="left">
+                <div class="icon">📄</div>
+                <div class="title">Export PDF</div>
             </div>
-        </a>
+            <div class="arrow">➜</div>
+        </div>
 
         <!-- 3. Export Excel -->
-        <a href="/export/excel">
-            <div class="card">
-                <div class="left">
-                    <div class="icon">📊</div>
-                    <div class="title">Export Excel</div>
-                </div>
-                <div class="arrow">➜</div>
+        <div class="card btn-excel" onclick="doExport('excel')">
+            <div class="left">
+                <div class="icon">📊</div>
+                <div class="title">Export Excel</div>
             </div>
-        </a>
+            <div class="arrow">➜</div>
+        </div>
 
         <!-- 4. Backup Database -->
         <a href="/backup">
@@ -192,5 +251,34 @@ a[href="/logout"] .card:hover .arrow { color: #f43f5e; }
 
     </div>
 </div>
+
+<script>
+// ตั้งค่าวันที่ช่องเลือกให้เป็นวันปัจจุบันอัตโนมัติเมื่อเปิดหน้า
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('exportDateInput');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+    }
+});
+
+function doExport(type) {
+    const eventName = document.getElementById("exportEventSelect").value;
+    const dateVal = document.getElementById("exportDateInput").value;
+
+    let url = `/export/${type}?`;
+    let params = [];
+
+    if (eventName) {
+        params.push("event_name=" + encodeURIComponent(eventName));
+    }
+    if (dateVal) {
+        params.push("date=" + encodeURIComponent(dateVal));
+    }
+
+    // เปิดสั่งดาวน์โหลดไฟล์พร้อมส่งพารามิเตอร์งานและวันที่
+    window.location.href = url + params.join("&");
+}
+</script>
 
 {% endblock %}
