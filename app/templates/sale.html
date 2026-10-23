@@ -142,6 +142,24 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+.station-select {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.station-select:hover {
+    background: #e0e7ff;
+}
+
 /* Row 2 Styles */
 .header-row.row-2 {
     display: grid !important;
@@ -267,18 +285,9 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 25px;
+    font-size: 17px;
     font-weight: 800;
     color: var(--text-main);
-}
-
-.product-price-badge {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--primary-dark);
-    background: var(--primary-light);
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
 }
 
 .size-grid {
@@ -289,13 +298,13 @@ body {
 
 .size-button {
     width: 100%;
-    height: 64px;
+    height: 52px;
     border: 1.5px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-main);
     color: #334155;
-    font-size: 23px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -515,12 +524,12 @@ body {
 
 .cart-item-title {
     font-weight: 800;
-    font-size: 17px;
+    font-size: 14px;
     color: var(--text-main);
 }
 
 .cart-item-sub {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--text-muted);
     font-weight: 600;
 }
@@ -604,11 +613,11 @@ body {
 }
 
 .pay-btn {
-    padding: 14px 8px;
+    padding: 10px 4px;
     border: 1.5px solid var(--border-color);
     background: var(--bg-main);
     border-radius: var(--radius-md);
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     color: #334155;
     cursor: pointer;
@@ -758,7 +767,7 @@ body {
 }
 
 .summary-row.total {
-    font-size: 25px;
+    font-size: 16px;
     font-weight: 800;
     color: var(--text-main);
     border-top: 1px dashed var(--border-color);
@@ -774,12 +783,11 @@ body {
 }
 
 .btn-cancel {
-    padding: 14px;
+    padding: 10px;
     border: 1px solid var(--border-color);
     background: white;
     border-radius: var(--radius-md);
     font-weight: 700;
-    font-size: 16px !important;
     cursor: pointer;
     color: var(--text-muted);
     transition: all 0.15s ease;
@@ -791,13 +799,12 @@ body {
 }
 
 .btn-confirm {
-    padding: 14px;
+    padding: 10px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
     border-radius: var(--radius-md);
     font-weight: 800;
-    font-size: 18px !important;
     cursor: pointer;
     font-size: 15px;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
@@ -921,7 +928,15 @@ body {
             </div>
 
             <div class="header-actions">
-                <!-- นำส่วนเลือกจุดขายออกตามต้องการ -->
+                <div class="event-box-inline">
+                    <span class="event-label">📍 จุดขาย:</span>
+                    <select id="stationSelect" class="station-select" onchange="onStationChange()">
+                        <option value="จุดขายที่ 1">จุดขายที่ 1</option>
+                        <option value="จุดขายที่ 2">จุดขายที่ 2</option>
+                        <option value="จุดขายที่ 3">จุดขายที่ 3</option>
+                    </select>
+                </div>
+
                 <div class="event-box-inline">
                     <span class="event-label">🎪 ชื่องาน</span>
                     <input type="text" id="eventName" class="event-input" placeholder="พิมพ์ชื่องาน..." autocomplete="off" oninput="saveEventName()">
@@ -954,24 +969,19 @@ body {
                 <div class="product-name">
                     👕 {{ product.name }}
                 </div>
-                {% if product.price is defined and product.price %}
-                <span class="product-price-badge">{{ product.price }} ฿</span>
-                {% endif %}
             </div>
 
             <div class="size-grid">
-                {% for size_item in product.sizes %}
-                    {% set size_val = size_item.size if size_item is mapping else size_item %}
-                    {% set item_price = size_item.price if size_item is mapping and size_item.price is defined else product.price | default(0) %}
+                {% for item in product.sizes %}
                 <button
                     class="size-button"
-                    id="btn-{{ product.name }}-{{ size_val }}"
+                    id="btn-{{ product.name }}-{{ item.size }}"
                     data-name="{{ product.name }}"
-                    data-size="{{ size_val }}"
-                    data-price="{{ item_price }}"
+                    data-size="{{ item.size }}"
+                    data-price="{{ item.price }}"
                     onclick="handleAddToCart(this)"
                 >
-                    {{ size_val }}
+                    {{ item.size }}
                 </button>
                 {% endfor %}
             </div>
@@ -1079,6 +1089,9 @@ body {
         </div>
 
         <div style="margin-bottom: 16px;">
+            <div style="font-size: 13px; color: #64748b; font-weight: 600; margin-bottom: 4px;">
+                จุดขาย: <span id="modalStationName" style="color: #0f172a; font-weight: 800;">-</span>
+            </div>
             <div style="font-size: 13px; color: #64748b; font-weight: 600; margin-bottom: 12px;">
                 ชื่องาน: <span id="modalEventName" style="color: #0f172a; font-weight: 800;">-</span>
             </div>
@@ -1138,6 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         eventInput.addEventListener("input", () => {
             saveEventName();
 
+            // รอ 500ms หลังหยุดพิมพ์ ค่อยยิง API
             clearTimeout(recentSalesTimer);
 
             recentSalesTimer = setTimeout(() => {
@@ -1164,7 +1178,8 @@ function showToast(message) {
 }
 
 function getSelectedStation() {
-    return 'จุดขายที่ 1';
+    const select = document.getElementById('stationSelect');
+    return select ? select.value : 'จุดขายที่ 1';
 }
 
 function saveEventName() {
@@ -1394,7 +1409,7 @@ async function submitBatchSale() {
 
     const payload = {
         cart: cart,
-        items: cart,
+        items: cart, // ส่งสำรองไว้ทั้ง cart และ items
         discount: discount,
         payment_method: selectedPaymentMethod,
         event_name: eventName,
@@ -1402,12 +1417,13 @@ async function submitBatchSale() {
     };
 
     try {
-        const response = await fetch("/api/sell", {
+        const response = await fetch("/api/sell-batch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
+        // ถ้า Server ตอบกลับ status 500 ให้แสดง alert ทันที
         if (!response.ok) {
             const errText = await response.text();
             alert("❌ Server Error (" + response.status + "): " + errText);
@@ -1429,6 +1445,33 @@ async function submitBatchSale() {
     }
 }
 
+async function processOfflineSave(payload) {
+    // เช็คทั้ง saveSaleOffline และ saveOfflineOrder
+    const offlineFunc = window.saveSaleOffline || window.saveOfflineOrder || window.saveOrderOffline;
+
+    if (typeof offlineFunc === 'function') {
+        const saved = await offlineFunc(payload);
+        if (saved) {
+            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
+            resetCartAndModal();
+        } else {
+            alert("❌ ไม่สามารถบันทึกข้อมูล Offline ลงเครื่องได้");
+        }
+    } else {
+        // กรณีไม่มีฟังก์ชัน ให้เซฟลง LocalStorage โดยตรงทันทีเป็น Fallback
+        try {
+            let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
+            offlineOrders.push({ ...payload, timestamp: new Date().toISOString() });
+            localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
+            
+            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
+            resetCartAndModal();
+        } catch (e) {
+            alert("❌ ไม่สามารถบันทึกข้อมูลลง LocalStorage ได้");
+        }
+    }
+}
+
 function resetCartAndModal() {
     cart = [];
     updateCartUI();
@@ -1437,26 +1480,40 @@ function resetCartAndModal() {
     if (discountInput) discountInput.value = 0;
 }
 
-/* --- ดึงข้อมูลการขายล่าสุด & อัปเดตรายได้บน Navbar --- */
+/* --- ดึงข้อมูลการขายล่าสุด --- */
 let recentSalesController = null;
 let recentSalesRequestId = 0;
 
 async function loadRecentSales() {
+
     if (!navigator.onLine) return;
 
     const stationName = getSelectedStation();
-    const eventInput = document.getElementById("eventName") || document.getElementById("event_name_input") || document.getElementById("event_name");
+
+    const eventInput =
+        document.getElementById("eventName") ||
+        document.getElementById("event_name_input") ||
+        document.getElementById("event_name");
+
     const eventName = eventInput ? eventInput.value.trim() : "";
 
+    // ถ้ามี Request เก่ายังทำงานอยู่ ให้ยกเลิก
     if (recentSalesController) {
         recentSalesController.abort();
     }
 
     recentSalesController = new AbortController();
+
+    // ป้องกัน Response เก่ามาทับ Response ใหม่
     const requestId = ++recentSalesRequestId;
 
     try {
-        const url = `/api/recent-sales?station_name=${encodeURIComponent(stationName)}&event_name=${encodeURIComponent(eventName)}`;
+
+        // ยิง API เพียงเส้นทางเดียว
+        const url =
+            `/api/recent-sales?station_name=${encodeURIComponent(stationName)}` +
+            `&event_name=${encodeURIComponent(eventName)}`;
+
         const response = await fetch(url, {
             signal: recentSalesController.signal,
             cache: "no-store"
@@ -1468,97 +1525,142 @@ async function loadRecentSales() {
 
         const data = await response.json();
 
-        if (requestId !== recentSalesRequestId || !data.success) {
+        // ถ้ามี Request ใหม่กว่าแล้ว ไม่ต้องเอาข้อมูลเก่ามาแสดง
+        if (requestId !== recentSalesRequestId) {
             return;
         }
 
-        // ==========================================
-        // 1. อัปเดตจำนวนตัวในรอบนี้
-        // ==========================================
+        if (!data.success) {
+            return;
+        }
+
+        // =========================
+        // จำนวนสินค้าที่ขาย
+        // =========================
+
         const saleCountEl = document.getElementById("saleCount");
+
         if (saleCountEl) {
-            const countVal = data.total_items !== undefined ? data.total_items : (data.count !== undefined ? data.count : 0);
+
+            const countVal =
+                data.total_items !== undefined
+                    ? data.total_items
+                    : data.count !== undefined
+                        ? data.count
+                        : data.total_count !== undefined
+                            ? data.total_count
+                            : 0;
+
             saleCountEl.textContent = countVal;
         }
 
-        // ==========================================
-        // 2. อัปเดตยอดรายได้เฉพาะจุดที่มี ID #headerRevenue ช่องเดียวเท่านั้น
-        // ==========================================
-        const revenueVal = data.total_revenue !== undefined ? data.total_revenue : (data.revenue !== undefined ? data.revenue : 0);
-        const formattedRevenue = Number(revenueVal).toLocaleString();
+        // =========================
+        // ยอดขาย
+        // =========================
 
-        const revenueEl = document.getElementById('headerRevenue');
+        const revenueEl =
+            document.getElementById("headerRevenue") ||
+            document.getElementById("header-revenue") ||
+            document.getElementById("today-revenue");
+
         if (revenueEl) {
-            revenueEl.textContent = formattedRevenue;
+
+            const revenueVal =
+                data.total_revenue !== undefined
+                    ? data.total_revenue
+                    : data.revenue !== undefined
+                        ? data.revenue
+                        : 0;
+
+            revenueEl.textContent =
+                Number(revenueVal).toLocaleString();
         }
 
-        // ==========================================
-        // 3. แสดงรายการขายล่าสุด
-        // ==========================================
-        const recentContainer = document.getElementById("recent");
+        // =========================
+        // รายการขายล่าสุด
+        // =========================
+
+        const recentContainer =
+            document.getElementById("recent");
+
         if (!recentContainer) return;
 
         const sales = data.sales || [];
+
         if (sales.length === 0) {
-            recentContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;">ยังไม่มีรายการขายในรอบนี้</div>';
+
+            recentContainer.innerHTML = `
+                <div style="
+                    text-align:center;
+                    color:#94a3b8;
+                    padding:16px;
+                ">
+                    ยังไม่มีรายการขายในรอบนี้
+                </div>
+            `;
+
             return;
         }
 
         recentContainer.innerHTML = sales.map(item => {
-            const payMethod = item.payment_method || "เงินสด";
+
+            const payMethod =
+                item.payment_method || "เงินสด";
+
             let payClass = "pay-cash";
+
             if (payMethod === "โอนเงิน") {
                 payClass = "pay-transfer";
             } else if (payMethod === "คนละครึ่ง") {
                 payClass = "pay-half";
             }
 
-            // แก้ปัญหาปีเพี้ยน โดยดึงเอาเวลา (ชั่วโมง:นาที) ที่ถูกต้องมาต่อกับวันที่ปัจจุบันของเครื่อง หรือแสดงผลตรงๆ
-            let formattedDateTime = item.datetime || '-';
-            if (item.datetime && item.datetime.includes(' ')) {
-                try {
-                    let [datePart, timePart] = item.datetime.split(' ');
-                    let [year, month, day] = datePart.includes('-') ? datePart.split('-') : datePart.split('/');
-                    let [hours, minutes] = timePart.split(':');
-
-                    // บวก 7 ชั่วโมงเข้าไปตรงๆ แบบตัวเลข (ถ้าเกิน 24 จะได้จัดการง่าย หรือปล่อยให้ระบบเลื่อนวัน)
-                    let h = parseInt(hours, 10) + 7;
-                    let targetDay = parseInt(day, 10);
-                    
-                    if (h >= 24) {
-                        h -= 24;
-                        targetDay += 1; // ถ้าข้ามเที่ยงคืน ให้บวกเพิ่ม 1 วัน
-                    }
-
-                    let resHours = String(h).padStart(2, '0');
-                    let resMins = String(minutes).padStart(2, '0');
-                    let resDay = String(targetDay).padStart(2, '0');
-                    let resMonth = String(month).padStart(2, '0');
-                    let resYear = year; // ใช้ปีเดิมจากฐานข้อมูล (เช่น 2026)
-
-                    formattedDateTime = `${resDay}/${resMonth}/${resYear} ${resHours}:${resMins}`;
-                } catch (e) {
-                    formattedDateTime = item.datetime;
-                }
-            }
-
             return `
                 <div class="recent-row">
-                    <span class="recent-time">${formattedDateTime}</span>
-                    <span class="recent-event">${item.event_name || 'ทั่วไป'}</span>
-                    <span class="recent-product">${item.category || '-'}</span>
-                    <span class="recent-size">${item.size || '-'}</span>
-                    <span class="recent-price">${Number(item.price || 0).toLocaleString()} ฿</span>
-                    <span class="recent-payment ${payClass}">${payMethod}</span>
+
+                    <span class="recent-time">
+                        ${item.datetime || '-'}
+                    </span>
+
+                    <span class="recent-event">
+                        ${item.event_name || 'ทั่วไป'}
+                    </span>
+
+                    <span class="recent-product">
+                        ${item.category || '-'}
+                    </span>
+
+                    <span class="recent-size">
+                        ${item.size || '-'}
+                    </span>
+
+                    <span class="recent-price">
+                        ${Number(item.price || 0).toLocaleString()} ฿
+                    </span>
+
+                    <span class="recent-payment ${payClass}">
+                        ${payMethod}
+                    </span>
+
                 </div>
             `;
+
         }).join('');
 
     } catch (error) {
+
+        // AbortError คือ Request เก่าที่เราสั่งยกเลิกเอง
+        // ไม่ต้องแสดงเป็น Error
         if (error.name !== "AbortError") {
-            console.error("Error loading recent sales:", error);
+            console.error(
+                "Error loading recent sales:",
+                error
+            );
         }
+
     } finally {
+
+        // เคลียร์ Controller เฉพาะ Request ปัจจุบัน
         if (requestId === recentSalesRequestId) {
             recentSalesController = null;
         }
@@ -1571,7 +1673,7 @@ async function undoSale() {
         return;
     }
 
-    const stationName = getSelectedStation();
+    const stationName = typeof getSelectedStation === "function" ? getSelectedStation() : "จุดขายที่ 1";
     const eventInput = document.getElementById("eventName");
     const eventName = eventInput ? eventInput.value.trim() : "";
 
@@ -1582,6 +1684,15 @@ async function undoSale() {
             body: JSON.stringify({ station_name: stationName, event_name: eventName })
         });
         let data = await response.json();
+
+        if (!data.success && data.message && data.message.includes("ไม่มีรายการขาย")) {
+            response = await fetch("/api/undo-sale", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ station_name: "", event_name: eventName })
+            });
+            data = await response.json();
+        }
 
         if (data.success) {
             showToast("↩️ ยกเลิกรายการล่าสุดเรียบร้อย");
@@ -1601,7 +1712,9 @@ async function openCloseShiftModal() {
     const eventInput = document.getElementById("eventName");
     const eventName = eventInput ? eventInput.value.trim() : "";
 
+    const modalStation = document.getElementById("modalStationName");
     const modalEvent = document.getElementById("modalEventName");
+    if (modalStation) modalStation.textContent = stationName;
     if (modalEvent) modalEvent.textContent = eventName || "ไม่ได้ระบุ";
 
     try {
@@ -1676,34 +1789,22 @@ async function closeShift() {
     }
 }
 
-/* --- ฟังก์ชันแชร์สรุปยอดเข้า LINE (พร้อมสรุป เงินสด / โอนเงิน / คนละครึ่ง) --- */
+function onStationChange() {
+    loadSavedEventName();
+    loadRecentSales();
+}
+
+/* --- ฟังก์ชันแชร์สรุปยอดเข้า LINE --- */
 function shareToLine() {
     const station = getSelectedStation();
-    
     const eventInput = document.getElementById("eventName");
-    const eventName = (eventInput && eventInput.value.trim()) ? eventInput.value.trim() : "ทั่วไป";
+    const eventName = eventInput ? eventInput.value.trim() : "ทั่วไป";
     
-    const countEl = document.getElementById("saleCount") || document.getElementById("modalTotalQty");
+    const countEl = document.getElementById("saleCount");
     const count = countEl ? countEl.textContent.trim() : "0";
     
-    let revenue = "0";
-    const revenueSelectors = ['#headerRevenue', '#header-revenue', '#today-revenue', '#modalTotalRevenue'];
-    for (let s of revenueSelectors) {
-        const el = document.querySelector(s);
-        if (el && el.textContent.trim()) {
-            revenue = el.textContent.trim();
-            break;
-        }
-    }
-
-    const cashEl = document.getElementById("modalCash") || document.getElementById("cashAmount");
-    const cash = cashEl ? cashEl.textContent.trim() : "0.00 บาท";
-
-    const transferEl = document.getElementById("modalTransfer") || document.getElementById("transferAmount");
-    const transfer = transferEl ? transferEl.textContent.trim() : "0.00 บาท";
-
-    const halfEl = document.getElementById("modalHalf") || document.getElementById("halfAmount");
-    const half = halfEl ? halfEl.textContent.trim() : "0.00 บาท";
+    const revenueEl = document.getElementById("headerRevenue");
+    const revenue = revenueEl ? revenueEl.textContent.trim() : "0";
 
     const now = new Date();
     const timeStr = now.toLocaleDateString('th-TH', { 
@@ -1713,14 +1814,12 @@ function shareToLine() {
 
     const message = `📊 สรุปยอดขายประจำวัน\n` +
                     `------------------------\n` +
+                    `📍 จุดขาย: ${station}\n` +
                     `🎪 งาน: ${eventName}\n` +
                     `📅 วัน/เวลา: ${timeStr} น.\n` +
                     `------------------------\n` +
-                    `📦 จำนวนที่ขายได้: ${count} ตัว\n\n` +
-                    `💵 เงินสด: ${cash}\n` +
-                    `📲 โอนเงิน: ${transfer}\n` +
-                    `🤝 คนละครึ่ง: ${half}\n\n` +
-                    `💰 ยอดรวมทั้งหมด: ${revenue}\n` +
+                    `📦 จำนวนที่ขายได้: ${count} ตัว\n` +
+                    `💰 รายได้รวม: ${revenue} บาท\n` +
                     `------------------------\n` +
                     `ส่งจากระบบ POS`;
 
@@ -1744,8 +1843,29 @@ function handleAddToCart(btn) {
     const size = btn.getAttribute('data-size');
     const price = parseFloat(btn.getAttribute('data-price')) || 0;
     
+    // เรียกฟังก์ชัน addToCart เดิม
     addToCart(name, size, price);
 }
+</script>
+
+<script>
+  // บังคับสร้างฟังก์ชัน Offline ไว้ในตัว sale.html เอง
+  window.saveOfflineOrder = window.saveOfflineOrder || function(orderData) {
+      try {
+          let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
+          offlineOrders.push({
+              ...orderData,
+              timestamp: new Date().toISOString()
+          });
+          localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
+          console.log("บันทึกข้อมูล Offline สำเร็จ:", orderData);
+          return true;
+      } catch (err) {
+          console.error("เกิดข้อผิดพลาดในการบันทึก Offline:", err);
+          return false;
+      }
+  };
+  window.saveOrderOffline = window.saveOfflineOrder;
 </script>
 
 {% endblock %}
