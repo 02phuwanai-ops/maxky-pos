@@ -1,67 +1,52 @@
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Query
 from fastapi.responses import FileResponse
 
-from app.database.report_db import get_today_report
 from app.utils.pdf_report import create_pdf
-
 
 router = APIRouter()
 
+# ==========================================
+# Export PDF
+# ==========================================
 
 @router.get("/export/pdf")
 def export_pdf(
-    event_name: str = ""
+    event_name: str = "",
+    date: Optional[str] = Query(None, description="วันที่ต้องการ Export รูปแบบ YYYY-MM-DD")
 ):
-
-    # ==========================================
-    # ชื่องาน
-    # ==========================================
-
     event_name = event_name.strip()
+    target_date = date.strip() if date else ""
 
+    # เรียกใช้ฟังก์ชัน create_pdf จาก pdf_report.py
+    try:
+        filepath = create_pdf(
+            event_name=event_name,
+            date=target_date
+        )
+    except TypeError:
+        # Fallback กรณีฟังก์ชันรับแค่ event_name แบบเดิม
+        filepath = create_pdf(
+            event_name=event_name
+        )
 
-    # ==========================================
-    # ชื่อไฟล์ PDF
-    # ==========================================
-
+    # กำหนดชื่อไฟล์ส่งกลับ
+    name_parts = []
     if event_name:
+        safe_event = "".join(c for c in event_name if c not in '\\/:*?"<>|').strip()
+        if safe_event:
+            name_parts.append(safe_event)
+    
+    if target_date:
+        name_parts.append(target_date)
 
-        filename = "MAXKY_Report.pdf"
-
+    if name_parts:
+        filename = f"MAXKY_{'_'.join(name_parts)}.pdf"
     else:
-
-        filename = "MAXKY_Report.pdf"
-
-
-    # ==========================================
-    # ดึงข้อมูลรายงาน
-    # ==========================================
-
-    data = get_today_report(
-        event_name
-    )
-
-
-    # ==========================================
-    # สร้าง PDF
-    # ==========================================
-
-    create_pdf(
-        filename,
-        data
-    )
-
-
-    # ==========================================
-    # ส่งไฟล์กลับ
-    # ==========================================
+        filename = "MAXKY_REPORT.pdf"
 
     return FileResponse(
-
-        filename,
-
-        media_type="application/pdf",
-
-        filename=filename
-
+        path=filepath,
+        filename=filename,
+        media_type="application/pdf"
     )
