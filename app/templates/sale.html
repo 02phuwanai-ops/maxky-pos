@@ -124,7 +124,7 @@ body {
 }
 
 .event-input {
-    width: 160px;
+    width: 180px;
     height: 38px;
     padding: 0 12px;
     border: 1px solid var(--border-color);
@@ -140,24 +140,6 @@ body {
 .event-input:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.station-select {
-    height: 38px;
-    padding: 0 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--primary-light);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--primary-dark);
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.station-select:hover {
-    background: #e0e7ff;
 }
 
 /* Row 2 Styles */
@@ -285,7 +267,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 17px;
+    font-size: 23px;
     font-weight: 800;
     color: var(--text-main);
 }
@@ -298,13 +280,13 @@ body {
 
 .size-button {
     width: 100%;
-    height: 52px;
+    height: 65px;
     border: 1.5px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-main);
     color: #334155;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 23px;
+    font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -524,12 +506,12 @@ body {
 
 .cart-item-title {
     font-weight: 800;
-    font-size: 14px;
+    font-size: 18px;
     color: var(--text-main);
 }
 
 .cart-item-sub {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--text-muted);
     font-weight: 600;
 }
@@ -613,11 +595,11 @@ body {
 }
 
 .pay-btn {
-    padding: 10px 4px;
+    padding: 15px 9px;
     border: 1.5px solid var(--border-color);
     background: var(--bg-main);
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: 17px;
     font-weight: 700;
     color: #334155;
     cursor: pointer;
@@ -767,7 +749,7 @@ body {
 }
 
 .summary-row.total {
-    font-size: 16px;
+    font-size: 21px;
     font-weight: 800;
     color: var(--text-main);
     border-top: 1px dashed var(--border-color);
@@ -783,11 +765,12 @@ body {
 }
 
 .btn-cancel {
-    padding: 10px;
+    padding: 14px;
     border: 1px solid var(--border-color);
     background: white;
     border-radius: var(--radius-md);
     font-weight: 700;
+    font-size: 16px !important;
     cursor: pointer;
     color: var(--text-muted);
     transition: all 0.15s ease;
@@ -799,14 +782,14 @@ body {
 }
 
 .btn-confirm {
-    padding: 10px;
+    padding: 14px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
     border-radius: var(--radius-md);
     font-weight: 800;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 18px;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     transition: all 0.2s ease;
 }
@@ -928,15 +911,6 @@ body {
             </div>
 
             <div class="header-actions">
-                <div class="event-box-inline">
-                    <span class="event-label">📍 จุดขาย:</span>
-                    <select id="stationSelect" class="station-select" onchange="onStationChange()">
-                        <option value="จุดขายที่ 1">จุดขายที่ 1</option>
-                        <option value="จุดขายที่ 2">จุดขายที่ 2</option>
-                        <option value="จุดขายที่ 3">จุดขายที่ 3</option>
-                    </select>
-                </div>
-
                 <div class="event-box-inline">
                     <span class="event-label">🎪 ชื่องาน</span>
                     <input type="text" id="eventName" class="event-input" placeholder="พิมพ์ชื่องาน..." autocomplete="off" oninput="saveEventName()">
@@ -1089,9 +1063,6 @@ body {
         </div>
 
         <div style="margin-bottom: 16px;">
-            <div style="font-size: 13px; color: #64748b; font-weight: 600; margin-bottom: 4px;">
-                จุดขาย: <span id="modalStationName" style="color: #0f172a; font-weight: 800;">-</span>
-            </div>
             <div style="font-size: 13px; color: #64748b; font-weight: 600; margin-bottom: 12px;">
                 ชื่องาน: <span id="modalEventName" style="color: #0f172a; font-weight: 800;">-</span>
             </div>
@@ -1151,7 +1122,6 @@ document.addEventListener('DOMContentLoaded', () => {
         eventInput.addEventListener("input", () => {
             saveEventName();
 
-            // รอ 500ms หลังหยุดพิมพ์ ค่อยยิง API
             clearTimeout(recentSalesTimer);
 
             recentSalesTimer = setTimeout(() => {
@@ -1178,20 +1148,17 @@ function showToast(message) {
 }
 
 function getSelectedStation() {
-    const select = document.getElementById('stationSelect');
-    return select ? select.value : 'จุดขายที่ 1';
+    return 'จุดขายที่ 1';
 }
 
 function saveEventName() {
-    const station = getSelectedStation();
     const eventInput = document.getElementById('eventName');
     const val = eventInput ? eventInput.value : '';
-    localStorage.setItem('saved_event_name_' + station, val);
+    localStorage.setItem('saved_event_name_main', val);
 }
 
 function loadSavedEventName() {
-    const station = getSelectedStation();
-    const saved = localStorage.getItem('saved_event_name_' + station);
+    const saved = localStorage.getItem('saved_event_name_main');
     const eventInput = document.getElementById('eventName');
     if (eventInput) eventInput.value = saved ? saved : '';
 }
@@ -1409,7 +1376,7 @@ async function submitBatchSale() {
 
     const payload = {
         cart: cart,
-        items: cart, // ส่งสำรองไว้ทั้ง cart และ items
+        items: cart,
         discount: discount,
         payment_method: selectedPaymentMethod,
         event_name: eventName,
@@ -1423,7 +1390,6 @@ async function submitBatchSale() {
             body: JSON.stringify(payload)
         });
 
-        // ถ้า Server ตอบกลับ status 500 ให้แสดง alert ทันที
         if (!response.ok) {
             const errText = await response.text();
             alert("❌ Server Error (" + response.status + "): " + errText);
@@ -1442,33 +1408,6 @@ async function submitBatchSale() {
     } catch (error) {
         console.error("Fetch Error:", error);
         alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: " + error.message);
-    }
-}
-
-async function processOfflineSave(payload) {
-    // เช็คทั้ง saveSaleOffline และ saveOfflineOrder
-    const offlineFunc = window.saveSaleOffline || window.saveOfflineOrder || window.saveOrderOffline;
-
-    if (typeof offlineFunc === 'function') {
-        const saved = await offlineFunc(payload);
-        if (saved) {
-            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
-            resetCartAndModal();
-        } else {
-            alert("❌ ไม่สามารถบันทึกข้อมูล Offline ลงเครื่องได้");
-        }
-    } else {
-        // กรณีไม่มีฟังก์ชัน ให้เซฟลง LocalStorage โดยตรงทันทีเป็น Fallback
-        try {
-            let offlineOrders = JSON.parse(localStorage.getItem('offline_orders') || '[]');
-            offlineOrders.push({ ...payload, timestamp: new Date().toISOString() });
-            localStorage.setItem('offline_orders', JSON.stringify(offlineOrders));
-            
-            showToast("📲 บันทึกข้อมูลแบบ Offline ในเครื่องแล้ว");
-            resetCartAndModal();
-        } catch (e) {
-            alert("❌ ไม่สามารถบันทึกข้อมูลลง LocalStorage ได้");
-        }
     }
 }
 
@@ -1497,19 +1436,14 @@ async function loadRecentSales() {
 
     const eventName = eventInput ? eventInput.value.trim() : "";
 
-    // ถ้ามี Request เก่ายังทำงานอยู่ ให้ยกเลิก
     if (recentSalesController) {
         recentSalesController.abort();
     }
 
     recentSalesController = new AbortController();
-
-    // ป้องกัน Response เก่ามาทับ Response ใหม่
     const requestId = ++recentSalesRequestId;
 
     try {
-
-        // ยิง API เพียงเส้นทางเดียว
         const url =
             `/api/recent-sales?station_name=${encodeURIComponent(stationName)}` +
             `&event_name=${encodeURIComponent(eventName)}`;
@@ -1525,7 +1459,6 @@ async function loadRecentSales() {
 
         const data = await response.json();
 
-        // ถ้ามี Request ใหม่กว่าแล้ว ไม่ต้องเอาข้อมูลเก่ามาแสดง
         if (requestId !== recentSalesRequestId) {
             return;
         }
@@ -1534,14 +1467,9 @@ async function loadRecentSales() {
             return;
         }
 
-        // =========================
-        // จำนวนสินค้าที่ขาย
-        // =========================
-
         const saleCountEl = document.getElementById("saleCount");
 
         if (saleCountEl) {
-
             const countVal =
                 data.total_items !== undefined
                     ? data.total_items
@@ -1554,59 +1482,22 @@ async function loadRecentSales() {
             saleCountEl.textContent = countVal;
         }
 
-        // =========================
-        // ยอดขาย
-        // =========================
-
-        const revenueEl =
-            document.getElementById("headerRevenue") ||
-            document.getElementById("header-revenue") ||
-            document.getElementById("today-revenue");
-
-        if (revenueEl) {
-
-            const revenueVal =
-                data.total_revenue !== undefined
-                    ? data.total_revenue
-                    : data.revenue !== undefined
-                        ? data.revenue
-                        : 0;
-
-            revenueEl.textContent =
-                Number(revenueVal).toLocaleString();
-        }
-
-        // =========================
-        // รายการขายล่าสุด
-        // =========================
-
-        const recentContainer =
-            document.getElementById("recent");
-
+        const recentContainer = document.getElementById("recent");
         if (!recentContainer) return;
 
         const sales = data.sales || [];
 
         if (sales.length === 0) {
-
             recentContainer.innerHTML = `
-                <div style="
-                    text-align:center;
-                    color:#94a3b8;
-                    padding:16px;
-                ">
+                <div style="text-align:center; color:#94a3b8; padding:16px;">
                     ยังไม่มีรายการขายในรอบนี้
                 </div>
             `;
-
             return;
         }
 
         recentContainer.innerHTML = sales.map(item => {
-
-            const payMethod =
-                item.payment_method || "เงินสด";
-
+            const payMethod = item.payment_method || "เงินสด";
             let payClass = "pay-cash";
 
             if (payMethod === "โอนเงิน") {
@@ -1617,50 +1508,21 @@ async function loadRecentSales() {
 
             return `
                 <div class="recent-row">
-
-                    <span class="recent-time">
-                        ${item.datetime || '-'}
-                    </span>
-
-                    <span class="recent-event">
-                        ${item.event_name || 'ทั่วไป'}
-                    </span>
-
-                    <span class="recent-product">
-                        ${item.category || '-'}
-                    </span>
-
-                    <span class="recent-size">
-                        ${item.size || '-'}
-                    </span>
-
-                    <span class="recent-price">
-                        ${Number(item.price || 0).toLocaleString()} ฿
-                    </span>
-
-                    <span class="recent-payment ${payClass}">
-                        ${payMethod}
-                    </span>
-
+                    <span class="recent-time">${item.datetime || '-'}</span>
+                    <span class="recent-event">${item.event_name || 'ทั่วไป'}</span>
+                    <span class="recent-product">${item.category || '-'}</span>
+                    <span class="recent-size">${item.size || '-'}</span>
+                    <span class="recent-price">${Number(item.price || 0).toLocaleString()} ฿</span>
+                    <span class="recent-payment ${payClass}">${payMethod}</span>
                 </div>
             `;
-
         }).join('');
 
     } catch (error) {
-
-        // AbortError คือ Request เก่าที่เราสั่งยกเลิกเอง
-        // ไม่ต้องแสดงเป็น Error
         if (error.name !== "AbortError") {
-            console.error(
-                "Error loading recent sales:",
-                error
-            );
+            console.error("Error loading recent sales:", error);
         }
-
     } finally {
-
-        // เคลียร์ Controller เฉพาะ Request ปัจจุบัน
         if (requestId === recentSalesRequestId) {
             recentSalesController = null;
         }
@@ -1673,7 +1535,7 @@ async function undoSale() {
         return;
     }
 
-    const stationName = typeof getSelectedStation === "function" ? getSelectedStation() : "จุดขายที่ 1";
+    const stationName = getSelectedStation();
     const eventInput = document.getElementById("eventName");
     const eventName = eventInput ? eventInput.value.trim() : "";
 
@@ -1684,15 +1546,6 @@ async function undoSale() {
             body: JSON.stringify({ station_name: stationName, event_name: eventName })
         });
         let data = await response.json();
-
-        if (!data.success && data.message && data.message.includes("ไม่มีรายการขาย")) {
-            response = await fetch("/api/undo-sale", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ station_name: "", event_name: eventName })
-            });
-            data = await response.json();
-        }
 
         if (data.success) {
             showToast("↩️ ยกเลิกรายการล่าสุดเรียบร้อย");
@@ -1712,9 +1565,7 @@ async function openCloseShiftModal() {
     const eventInput = document.getElementById("eventName");
     const eventName = eventInput ? eventInput.value.trim() : "";
 
-    const modalStation = document.getElementById("modalStationName");
     const modalEvent = document.getElementById("modalEventName");
-    if (modalStation) modalStation.textContent = stationName;
     if (modalEvent) modalEvent.textContent = eventName || "ไม่ได้ระบุ";
 
     try {
@@ -1789,14 +1640,8 @@ async function closeShift() {
     }
 }
 
-function onStationChange() {
-    loadSavedEventName();
-    loadRecentSales();
-}
-
 /* --- ฟังก์ชันแชร์สรุปยอดเข้า LINE --- */
 function shareToLine() {
-    const station = getSelectedStation();
     const eventInput = document.getElementById("eventName");
     const eventName = eventInput ? eventInput.value.trim() : "ทั่วไป";
     
@@ -1814,7 +1659,6 @@ function shareToLine() {
 
     const message = `📊 สรุปยอดขายประจำวัน\n` +
                     `------------------------\n` +
-                    `📍 จุดขาย: ${station}\n` +
                     `🎪 งาน: ${eventName}\n` +
                     `📅 วัน/เวลา: ${timeStr} น.\n` +
                     `------------------------\n` +
