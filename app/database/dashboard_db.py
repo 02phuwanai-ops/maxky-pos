@@ -158,11 +158,11 @@ def init_pos_db():
 
 
 # ==========================================
-# Dashboard (รองรับชื่องานและวันที่ย้อนหลังได้แม้ปิดกะแล้ว)
+# Dashboard (แก้ไขการกรองชื่องานและวันที่อย่างถูกต้อง)
 # ==========================================
 
 def get_dashboard(station_name=None, event_name=None, date=None):
-    """ดึงยอดขาย จำนวนชิ้น และกำไร รองรับการดูย้อนหลังแม้ปิดกะแล้ว"""
+    """ดึงยอดขาย จำนวนชิ้น และกำไร กรองตามชื่องานและวันที่อย่างถูกต้อง"""
 
     conn = get_db_connection()
 
@@ -180,22 +180,33 @@ def get_dashboard(station_name=None, event_name=None, date=None):
 
             params = []
 
-            # ถ้ามีการเลือกชื่องานหรือวันที่ ให้ดึงข้อมูลทั้งหมดของงานนั้น (รวมที่ปิดกะแล้ว)
-            # ถ้าไม่ได้เลือก (หน้า Dashboard ปกติ) ให้ดูเฉพาะที่ยังไม่ปิดกะ (is_closed = 0)
-            if not event_name and not date:
+            # 1. จัดการเคลียร์ค่า event_name หากส่งค่าว่าง หรือ "-- ทุกงาน --" มา ให้ถือว่าเป็น None
+            clean_event = None
+            if event_name and str(event_name).strip() and str(event_name).strip() not in ["-- ทุกงาน --", "None", "null"]:
+                clean_event = str(event_name).strip()
+
+            # 2. จัดการเคลียร์ค่า date หากส่งค่าว่างมา ให้ถือว่าเป็น None
+            clean_date = None
+            if date and str(date).strip() and str(date).strip() not in ["None", "null"]:
+                clean_date = str(date).strip()
+
+            # 3. กำหนด Logical Rules:
+            # - ถ้าไม่ได้เลือกทั้งชื่องานและวันที่ (หน้าแรกของ Dashboard) ให้ดูเฉพาะกะปัจจุบันที่ยังไม่ปิด (is_closed = 0)
+            # - ถ้ามีการระบุชื่องานหรือวันที่ ให้ดูข้อมูลทั้งหมดของงาน/วันที่นั้นๆ (รวมงานที่ปิดกะแล้ว)
+            if not clean_event and not clean_date:
                 query += " AND is_closed = 0"
 
             if station_name:
                 query += " AND station_name = %s"
                 params.append(station_name)
 
-            if event_name:
-                query += " AND TRIM(event_name) = TRIM(%s)"
-                params.append(event_name)
+            if clean_event:
+                query += " AND TRIM(event_name) = %s"
+                params.append(clean_event)
 
-            if date:
+            if clean_date:
                 query += " AND DATE(created_at) = %s"
-                params.append(date)
+                params.append(clean_date)
 
             cursor.execute(query, tuple(params))
             data = cursor.fetchone()
