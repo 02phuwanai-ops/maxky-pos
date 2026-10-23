@@ -235,7 +235,8 @@ async function updateNetworkStatus() {
             </div>
         </a>
 
-        <!-- รายได้วันนี้ (ซ่อนคำว่า Online แล้ว) -->
+        <!-- รายได้วันนี้ (แสดงเฉพาะหน้าขายเสื้อ /sale เท่านั้น) -->
+        {% if request.url.path == "/sale" %}
         <div class="header-revenue">
             <span id="networkStatus" class="network-badge status-online" style="display: none;">🟢 Online</span>
 
@@ -246,6 +247,7 @@ async function updateNetworkStatus() {
                 <span class="header-revenue-unit">บาท</span>
             </div>
         </div>
+        {% endif %}
 
     </div>
 </div>

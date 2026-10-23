@@ -65,14 +65,19 @@ def _async_delete_transaction(amount: float):
 
 # Helper คำนวณยอดสรุปแบบปลอดภัย
 def _get_safe_summary(station_name: str, event_name: str = ""):
+    # ถ้าร้านนี้กำหนดให้ต้องพิมพ์ชื่องาน แล้วผู้ใช้ยังไม่ได้พิมพ์ชื่องาน ให้ส่งค่า 0 ทันที
+    if not event_name or not event_name.strip():
+        return {
+            "total_items": 0,
+            "total_revenue": 0.0,
+            "cash": 0.0,
+            "transfer": 0.0,
+            "half": 0.0
+        }
+
     res = None
     try:
-        res = get_shift_sales_summary(station_name, event_name)
-    except TypeError:
-        try:
-            res = get_shift_sales_summary(station_name)
-        except Exception:
-            res = None
+        res = get_shift_sales_summary(station_name, event_name.strip())
     except Exception:
         res = None
 
@@ -89,17 +94,8 @@ def _get_safe_summary(station_name: str, event_name: str = ""):
         transfer = res.get("transfer") or 0
         half = res.get("half") or 0
 
-    if cnt == 0:
-        try:
-            cnt = today_sales_count()
-        except Exception:
-            cnt = 0
-
-    if rev == 0:
-        try:
-            rev = today_sales_revenue()
-        except Exception:
-            rev = 0.0
+    # ตัด Fallback ที่ไปเรียก today_sales_count() / today_sales_revenue() ออก 
+    # เพื่อไม่ให้ยอดของงานอื่นหลุดเข้ามาโชว์เวลาที่ยังไม่พิมพ์ชื่องาน
 
     return {
         "total_items": int(cnt),
@@ -249,14 +245,24 @@ def recent_sales(
     event_name: Optional[str] = Query(None)
 ):
     selected_station = station_name or station or "จุดขายที่ 1"
-    selected_event = event_name or ""
+    selected_event = event_name.strip() if event_name else ""
     
+    # ถ้ายังไม่พิมพ์ชื่องาน ไม่ให้แสดงรายการขายล่าสุดและยอดขายรวม
+    if not selected_event:
+        return {
+            "status": "success",
+            "success": True,
+            "ok": True,
+            "sales": [],
+            "count": 0,
+            "total_count": 0,
+            "revenue": 0.0,
+            "total_revenue": 0.0
+        }
+
     sales_data = []
     try:
-        try:
-            sales_data = get_recent_sales(selected_station, selected_event)
-        except TypeError:
-            sales_data = get_recent_sales(selected_station)
+        sales_data = get_recent_sales(selected_station, selected_event)
     except Exception as e:
         print(f"Error fetching recent sales: {e}")
 
