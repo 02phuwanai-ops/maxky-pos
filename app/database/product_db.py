@@ -212,7 +212,6 @@ def delete_product(product_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 1. หา category ก่อนลบ
             cursor.execute("""
                 SELECT category
                 FROM products
@@ -226,19 +225,16 @@ def delete_product(product_id):
 
             category = row.get("category") if isinstance(row, dict) else row[0]
 
-            # 2. ลบ Stock ของสินค้า
             cursor.execute("""
                 DELETE FROM stock
                 WHERE TRIM(category) = TRIM(%s)
             """, (category,))
 
-            # 3. ลบราคาของสินค้า
             cursor.execute("""
                 DELETE FROM product_prices
                 WHERE product_id = %s
             """, (product_id,))
 
-            # 4. ลบสินค้า
             cursor.execute("""
                 DELETE FROM products
                 WHERE id = %s
@@ -297,7 +293,7 @@ def update_product_name(product_id, category):
 
 def get_sale_products():
     """
-    ดึงสินค้า + ไซส์ที่มีสต็อก + ราคา
+    ดึงสินค้า + ไซส์ที่มีสต็อก + ราคาแยกตามรายไซส์จริง
     สำหรับหน้า /sale โดยใช้ SQL เพียง 1 Query
     """
     conn = get_db_connection()
@@ -339,16 +335,21 @@ def get_sale_products():
             for row in rows:
                 product_id = row["product_id"]
                 category = row["category"]
+                size = row["size"]
+                price = float(row["price"] or 0)
 
                 if category not in products:
                     products[category] = {
                         "id": product_id,
                         "name": category,
-                        "sizes": [],
-                        "price": float(row["price"] or 0)
+                        "sizes": []
                     }
 
-                products[category]["sizes"].append(row["size"])
+                # ส่งข้อมูลไซส์พร้อมราคาเฉพาะของไซส์นั้นๆ เข้าไป
+                products[category]["sizes"].append({
+                    "size": size,
+                    "price": price
+                })
 
             return list(products.values())
 

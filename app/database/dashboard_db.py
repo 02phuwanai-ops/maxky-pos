@@ -319,56 +319,63 @@ def get_low_stock_items():
 # สินค้าขายดีที่สุด
 # ==========================================
 
-def get_top_product():
+def get_top_product(event_name=None, date=None):
+    top_list = get_top_sales(event_name=event_name, date=date)
+    if top_list:
+        cat, sz, cnt = top_list[0]
+        return f"{cat} {sz}"
+    return "-"
 
+
+# ==========================================
+# Top 5 Sales (รองรับการกรองชื่องานและวันที่)
+# ==========================================
+
+def get_top_sales(event_name=None, date=None):
     conn = get_db_connection()
 
     try:
         with conn.cursor() as cursor:
-
-            cursor.execute("""
-                SELECT
-                    CONCAT(category, ' ', size) AS item_name
-                FROM sales
-                GROUP BY category, size
-                ORDER BY COUNT(*) DESC
-                LIMIT 1
-            """)
-
-            row = cursor.fetchone()
-
-        return (
-            row["item_name"]
-            if row and row.get("item_name")
-            else "-"
-        )
-
-    finally:
-        conn.close()
-
-
-# ==========================================
-# Top 5 Sales
-# ==========================================
-
-def get_top_sales():
-
-    conn = get_db_connection()
-
-    try:
-        with conn.cursor() as cursor:
-
-            cursor.execute("""
+            query = """
                 SELECT
                     category,
                     size,
                     COUNT(*) AS total_count
                 FROM sales
+                WHERE category IS NOT NULL AND TRIM(category) != ''
+                  AND size IS NOT NULL AND TRIM(size) != ''
+            """
+            params = []
+
+            # จัดการกรองชื่องาน
+            clean_event = None
+            if event_name and str(event_name).strip() and str(event_name).strip() not in ["-- ทุกงาน --", "None", "null"]:
+                clean_event = str(event_name).strip()
+
+            # จัดการกรองวันที่
+            clean_date = None
+            if date and str(date).strip() and str(date).strip() not in ["None", "null"]:
+                clean_date = str(date).strip()
+
+            # ถ้าไม่ได้เลือกชื่องานและวันที่ ให้ดูเฉพาะกะปัจจุบัน (is_closed = 0)
+            if not clean_event and not clean_date:
+                query += " AND is_closed = 0"
+
+            if clean_event:
+                query += " AND TRIM(event_name) = %s"
+                params.append(clean_event)
+
+            if clean_date:
+                query += " AND DATE(created_at) = %s"
+                params.append(clean_date)
+
+            query += """
                 GROUP BY category, size
                 ORDER BY COUNT(*) DESC
                 LIMIT 5
-            """)
+            """
 
+            cursor.execute(query, tuple(params))
             rows = cursor.fetchall()
 
         return [
