@@ -482,9 +482,9 @@
             <div class="list-item">
                 <div>
                     <span style="color:#94a3b8; margin-right:6px;">#{{ loop.index }}</span>
-                    <b>{{ item[0] }}</b> <span style="color:#64748b;">({{ item[1] }})</span>
+                    <b>{{ item.category }}</b> <span style="color:#64748b;">({{ item.size }})</span>
                 </div>
-                <span class="badge">{{ item[2] }} ตัว</span>
+                <span class="badge">{{ item.qty }} ตัว</span>
             </div>
             {% endfor %}
         {% else %}
