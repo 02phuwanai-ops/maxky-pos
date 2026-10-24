@@ -1518,16 +1518,44 @@ async function loadRecentSales() {
         recentContainer.innerHTML = sales.map(item => {
             const payMethod = item.payment_method || "เงินสด";
             let payClass = "pay-cash";
-
             if (payMethod === "โอนเงิน") {
                 payClass = "pay-transfer";
             } else if (payMethod === "คนละครึ่ง") {
                 payClass = "pay-half";
             }
 
+            // แก้ปัญหาปีเพี้ยน โดยดึงเอาเวลา (ชั่วโมง:นาที) ที่ถูกต้องมาต่อกับวันที่ปัจจุบันของเครื่อง หรือแสดงผลตรงๆ
+            let formattedDateTime = item.datetime || '-';
+            if (item.datetime && item.datetime.includes(' ')) {
+                try {
+                    let [datePart, timePart] = item.datetime.split(' ');
+                    let [year, month, day] = datePart.includes('-') ? datePart.split('-') : datePart.split('/');
+                    let [hours, minutes] = timePart.split(':');
+
+                    // บวก 7 ชั่วโมงเข้าไปตรงๆ แบบตัวเลข (ถ้าเกิน 24 จะได้จัดการง่าย หรือปล่อยให้ระบบเลื่อนวัน)
+                    let h = parseInt(hours, 10) + 7;
+                    let targetDay = parseInt(day, 10);
+                    
+                    if (h >= 24) {
+                        h -= 24;
+                        targetDay += 1; // ถ้าข้ามเที่ยงคืน ให้บวกเพิ่ม 1 วัน
+                    }
+
+                    let resHours = String(h).padStart(2, '0');
+                    let resMins = String(minutes).padStart(2, '0');
+                    let resDay = String(targetDay).padStart(2, '0');
+                    let resMonth = String(month).padStart(2, '0');
+                    let resYear = year; // ใช้ปีเดิมจากฐานข้อมูล (เช่น 2026)
+
+                    formattedDateTime = `${resDay}/${resMonth}/${resYear} ${resHours}:${resMins}`;
+                } catch (e) {
+                    formattedDateTime = item.datetime;
+                }
+            }
+
             return `
                 <div class="recent-row">
-                    <span class="recent-time">${item.datetime || '-'}</span>
+                    <span class="recent-time">${formattedDateTime}</span>
                     <span class="recent-event">${item.event_name || 'ทั่วไป'}</span>
                     <span class="recent-product">${item.category || '-'}</span>
                     <span class="recent-size">${item.size || '-'}</span>
@@ -1661,14 +1689,25 @@ async function closeShift() {
 
 /* --- ฟังก์ชันแชร์สรุปยอดเข้า LINE --- */
 function shareToLine() {
-    const eventInput = document.getElementById("eventName");
-    const eventName = eventInput ? eventInput.value.trim() : "ทั่วไป";
+    const station = typeof getSelectedStation === 'function' ? getSelectedStation() : "จุดขายที่ 1";
     
-    const countEl = document.getElementById("saleCount");
+    const eventInput = document.getElementById("eventName");
+    const eventName = (eventInput && eventInput.value.trim()) ? eventInput.value.trim() : "ทั่วไป";
+    
+    const countEl = document.getElementById("saleCount") || document.getElementById("modalTotalQty");
     const count = countEl ? countEl.textContent.trim() : "0";
     
-    const revenueEl = document.getElementById("headerRevenue");
+    const revenueEl = document.getElementById("headerRevenue") || document.getElementById("modalTotalRevenue");
     const revenue = revenueEl ? revenueEl.textContent.trim() : "0";
+
+    const cashEl = document.getElementById("modalCash") || document.getElementById("cashAmount");
+    const cash = cashEl ? cashEl.textContent.trim() : "0.00 บาท";
+
+    const transferEl = document.getElementById("modalTransfer") || document.getElementById("transferAmount");
+    const transfer = transferEl ? transferEl.textContent.trim() : "0.00 บาท";
+
+    const halfEl = document.getElementById("modalHalf") || document.getElementById("halfAmount");
+    const half = halfEl ? halfEl.textContent.trim() : "0.00 บาท";
 
     const now = new Date();
     const timeStr = now.toLocaleDateString('th-TH', { 
@@ -1678,11 +1717,15 @@ function shareToLine() {
 
     const message = `📊 สรุปยอดขายประจำวัน\n` +
                     `------------------------\n` +
+                    `📍 จุดขาย: ${station}\n` +
                     `🎪 งาน: ${eventName}\n` +
                     `📅 วัน/เวลา: ${timeStr} น.\n` +
                     `------------------------\n` +
-                    `📦 จำนวนที่ขายได้: ${count} ตัว\n` +
-                    `💰 รายได้รวม: ${revenue} บาท\n` +
+                    `📦 จำนวนที่ขายได้: ${count} ตัว\n\n` +
+                    `💵 เงินสด: ${cash}\n` +
+                    `📲 โอนเงิน: ${transfer}\n` +
+                    `🤝 คนละครึ่ง: ${half}\n\n` +
+                    `💰 ยอดรวมทั้งหมด: ${revenue}\n` +
                     `------------------------\n` +
                     `ส่งจากระบบ POS`;
 
