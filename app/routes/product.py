@@ -44,6 +44,20 @@ def product_page(request: Request):
 
     rows = []
 
+    # ดึงสต็อกทั้งหมดมารวดเดียวเพื่อแก้ปัญหา N+1 Query (โหลดไวขึ้นหลายเท่า)
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT category, size, quantity FROM stock")
+    stock_rows = cursor.fetchall()
+    conn.close()
+
+    # ทำเป็น Dictionary ค้นหาง่าย [category][size] = quantity
+    stock_map = {}
+    for cat, sz, qty in stock_rows:
+        if cat not in stock_map:
+            stock_map[cat] = {}
+        stock_map[cat][sz] = qty
+
     for product in get_products():
 
         product_id = product[0]
@@ -60,10 +74,8 @@ def product_page(request: Request):
             cost = item[2]
             price = item[3]
 
-            stock = get_stock(
-                category,
-                size
-            )
+            # ดึงจาก Stock Map ในหน่วยความจำโดยไม่ต้อง Query ซ้ำๆ
+            stock = stock_map.get(category, {}).get(size, 0)
 
             sizes.append(
                 (
