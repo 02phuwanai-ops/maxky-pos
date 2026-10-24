@@ -87,16 +87,16 @@ body {
 }
 
 .sale-title-icon {
-    font-size: 22px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    font-size: 24px;
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
     color: #ffffff;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    border-radius: 14px;
+    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.25);
 }
 
 .header-actions {
@@ -936,12 +936,22 @@ body {
     </div>
 
     <!-- Product List -->
+    <!-- Product List -->
     <div class="product-list">
         {% for product in products %}
         <div class="product-card" data-category="{{ product.name }}">
             <div class="product-name-container">
                 <div class="product-name">
-                    👕 {{ product.name }}
+                    {% if "กางเกง" in product.name %}
+                        🩳
+                    {% elif "กีฬา" in product.name %}
+                        ⚽
+                    {% elif "ฟอก" in product.name %}
+                        🔥
+                    {% else %}
+                        👕
+                    {% endif %}
+                    {{ product.name }}
                 </div>
             </div>
 
